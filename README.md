@@ -15,5 +15,5 @@
 - [**Tutorial**](TUTORIAL.md)
 - [**TypeDoc API Specification**](https://vladmandic.github.io/face-api/typedoc/index.html)
 
-<br><hr><br>
+<br>
 
