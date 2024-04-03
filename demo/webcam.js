@@ -122,7 +122,7 @@ function displayFaceDetail(detections){
       faceShape = "Long";
     }
 
-    if (ratioCheekBone > 1 && ratioJaw < 1 && ratioLength > 1.2) {
+    if ( ratioJaw < 1 && ratioLength > 1.2) {
       faceShape = "Diamond";
     }
     /**
