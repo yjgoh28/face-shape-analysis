@@ -121,6 +121,10 @@ function displayFaceDetail(detections){
     else if (ratioLength > 0.9999 || ratioJaw > 1.2999) {
       faceShape = "Long";
     }
+
+    if (ratioCheekBone > 1 && ratioJaw < 1 && ratioLength > 1.2) {
+      faceShape = "Diamond";
+    }
     /**
      * else if (ratioLength < XXXXX || ratioJaw > XXXX) {}
      * ... ...
@@ -254,6 +258,8 @@ async function detectVideo(video, canvas) {
       if (faceShapes == "Round") {
         recommendation = "Rectangular, Square, Oval";
       }
+      if (faceShapes =="Diamond")
+        recommendation = "Oval, Round, Cat-eye";
 
       drawFaces(canvas, result, fps.toLocaleString(), faceShapes, recommendation);
       displayEyeDistance(result);
