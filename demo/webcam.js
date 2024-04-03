@@ -121,8 +121,7 @@ function displayFaceDetail(detections){
     else if (ratioLength > 0.9999 || ratioJaw > 1.2999) {
       faceShape = "Long";
     }
-
-    if ( ratioJaw < 1 && ratioLength > 1.2) {
+    else if ( ratioJaw < 1 && ratioLength > 1.2) {
       faceShape = "Diamond";
     }
     /**
@@ -325,6 +324,11 @@ async function setupCamera() {
     }
     log(`Camera state: ${video.paused ? 'paused' : 'playing'}`);
   });
+  // Ensure this is called after the video element is playing
+  video.addEventListener('play', () => {
+    calculateAndDisplayBrightness(video, canvas);
+  });
+
   return new Promise((resolve) => {
     video.onloadeddata = async () => {
       canvas.width = video.videoWidth;
@@ -397,3 +401,50 @@ async function detectFaceShapes(video) {
         faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
     }, 100);
 }
+
+function calculateAndDisplayBrightness(video, canvas) {
+  if (!video || video.paused || video.ended) return;
+
+  // Ensure the canvas size matches the video frame size
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  const ctx = canvas.getContext('2d');
+  // Draw the video frame to the canvas
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  // Get the image data from the canvas
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+
+  // Calculate the average brightness
+  let totalBrightness = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    // Simple average for RGB
+    const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
+    totalBrightness += brightness;
+  }
+  const averageBrightness = totalBrightness / (imageData.width * imageData.height);
+
+  // Display the brightness on the screen
+  displayBrightness(averageBrightness);
+
+  // Call this function again to continuously update the brightness
+  requestAnimationFrame(() => calculateAndDisplayBrightness(video, canvas));
+}
+
+function displayBrightness(brightness) {
+  const logDiv = document.getElementById('log');
+  // Create a new div element for the brightness value
+  const brightnessDiv = document.createElement('div');
+  brightnessDiv.textContent = `Current Brightness: ${brightness.toFixed(2)}`;
+  // Append the new div to the log div
+  logDiv.appendChild(brightnessDiv);
+  // Optionally, scroll to the bottom of the log div to ensure the latest information is visible
+  logDiv.scrollTop = logDiv.scrollHeight;
+}
+
+// Ensure this is called after the video element is playing
+video.addEventListener('play', () => {
+  calculateAndDisplayBrightness(video, canvas);
+});
