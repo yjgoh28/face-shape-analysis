@@ -20,6 +20,8 @@ function estimateDistance(box) {
   return 'Far';
 }
 
+
+
 // import * as faceapi from '@vladmandic/face-api'; // use when downloading face-api as npm
 
 // configuration options
@@ -120,9 +122,6 @@ function displayFaceDetail(detections){
     } 
     else if (ratioLength > 0.9999 || ratioJaw > 1.2999) {
       faceShape = "Long";
-    }
-    else if ( ratioJaw < 1 && ratioLength > 1.2) {
-      faceShape = "Diamond";
     }
     /**
      * else if (ratioLength < XXXXX || ratioJaw > XXXX) {}
@@ -229,51 +228,45 @@ function drawFaces(canvas, data, fps, shapes, recommendation) {
 async function detectVideo(video, canvas) {
   if (!video || video.paused) return false;
   const t0 = performance.now();
+
+  // 1. Face Detection and Analysis
   faceapi
     .detectAllFaces(video, optionsSSDMobileNet)
     .withFaceLandmarks()
     .withFaceExpressions()
-    // .withFaceDescriptors()
     .withAgeAndGender()
     .then((result) => {
-
       const fps = 1000 / (performance.now() - t0);
       const faceShapes = displayFaceDetail(result);
-      // const recommendations = displayFaceDetail(result).recommendations;
       let recommendation = [];
-
       if (faceShapes == "Oval") {
         recommendation = "Square, Rectangular, Cat-eye";
       }
       if (faceShapes == "Long") {
         recommendation = "Round, Oval, Aviator";
       }
-      if (faceShapes == "Rectangle") {
-        recommendation = "Oval, Round, Oversize";
-      }
-      if (faceShapes == "Heart") {
-        recommendation = "Rectangular, Oval, Round";
-      }
-      if (faceShapes == "Round") {
-        recommendation = "Rectangular, Square, Oval";
-      }
-      if (faceShapes =="Diamond")
-        recommendation = "Oval, Round, Cat-eye";
+      // ... (Add more recommendations for other face shapes)
 
       drawFaces(canvas, result, fps.toLocaleString(), faceShapes, recommendation);
       displayEyeDistance(result);
       displayDistance(result);
-      
+
+      const now = Date.now();
+      if (now - lastBrightnessUpdate >= 3000) { // Check if 3 seconds have passed
+        const brightness = checkBrightness(video);
+        logBrightness(brightness); 
+        lastBrightnessUpdate = now;
+      }
+
       log(`===============================================================================`);
-      
       requestAnimationFrame(() => detectVideo(video, canvas));
-    
       return true;
     })
     .catch((err) => {
       log(`Detect Error: ${str(err)}`);
       return false;
     });
+
   return false;
 }
 
@@ -324,11 +317,6 @@ async function setupCamera() {
     }
     log(`Camera state: ${video.paused ? 'paused' : 'playing'}`);
   });
-  // Ensure this is called after the video element is playing
-  video.addEventListener('play', () => {
-    calculateAndDisplayBrightness(video, canvas);
-  });
-
   return new Promise((resolve) => {
     video.onloadeddata = async () => {
       canvas.width = video.videoWidth;
@@ -402,49 +390,33 @@ async function detectFaceShapes(video) {
     }, 100);
 }
 
-function calculateAndDisplayBrightness(video, canvas) {
-  if (!video || video.paused || video.ended) return;
+let brightnessLogElement = null; // Element to hold the brightness log
+let lastBrightnessUpdate = 0;   // Timestamp of last brightness update
 
-  // Ensure the canvas size matches the video frame size
+function logBrightness(brightness) {
+  if (!brightnessLogElement) {
+    brightnessLogElement = document.getElementById('brightnessLog'); // Assuming you have an element with id "brightnessLog"
+  }
+  brightnessLogElement.innerText = `Brightness: ${brightness.toFixed(2)}`; 
+}
+
+function checkBrightness(video) {
+  const canvas = document.createElement('canvas');
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
-
   const ctx = canvas.getContext('2d');
-  // Draw the video frame to the canvas
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-  // Get the image data from the canvas
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const data = imageData.data;
-
-  // Calculate the average brightness
-  let totalBrightness = 0;
+  let r, g, b, brightness;
+  let sum = 0;
   for (let i = 0; i < data.length; i += 4) {
-    // Simple average for RGB
-    const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
-    totalBrightness += brightness;
+    r = data[i];
+    g = data[i + 1];
+    b = data[i + 2];
+    brightness = (r + g + b) / 3;
+    sum += brightness;
   }
-  const averageBrightness = totalBrightness / (imageData.width * imageData.height);
-
-  // Display the brightness on the screen
-  displayBrightness(averageBrightness);
-
-  // Call this function again to continuously update the brightness
-  requestAnimationFrame(() => calculateAndDisplayBrightness(video, canvas));
+  const averageBrightness = sum / (canvas.width * canvas.height);
+  return averageBrightness;
 }
-
-function displayBrightness(brightness) {
-  const logDiv = document.getElementById('log');
-  // Create a new div element for the brightness value
-  const brightnessDiv = document.createElement('div');
-  brightnessDiv.textContent = `Current Brightness: ${brightness.toFixed(2)}`;
-  // Append the new div to the log div
-  logDiv.appendChild(brightnessDiv);
-  // Optionally, scroll to the bottom of the log div to ensure the latest information is visible
-  logDiv.scrollTop = logDiv.scrollHeight;
-}
-
-// Ensure this is called after the video element is playing
-video.addEventListener('play', () => {
-  calculateAndDisplayBrightness(video, canvas);
-});
