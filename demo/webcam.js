@@ -20,18 +20,15 @@ function estimateDistance(box) {
   return 'Far';
 }
 
-
-
 // import * as faceapi from '@vladmandic/face-api'; // use when downloading face-api as npm
 
 // configuration options
 const modelPath = '../model/'; // path to model folder that will be loaded using http
-// const modelPath = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/'; // path to model folder that will be loaded using http
-const minScore = 0.2; // minimum score
-const maxResults = 1; // maximum number of results to return, AKA: maximum number of face can be determined 
+const minScore = 0.2; // minimum score for face detection
+const maxResults = 1; // maximum number of faces to detect
 let optionsSSDMobileNet;
 
-// helper function to pretty-print json object to string
+// Helper function to pretty-print JSON object to string
 function str(json) {
   let text = '<font color="lightblue">';
   text += json ? JSON.stringify(json).replace(/{|}|"|\[|\]/g, '').replace(/,/g, ', ') : '';
@@ -39,13 +36,14 @@ function str(json) {
   return text;
 }
 
-// helper function to print strings to html document as a log
+// Helper function to print strings to HTML document as a log
 function log(...txt) {
   console.log(...txt); // eslint-disable-line no-console
   const div = document.getElementById('log');
   if (div) div.innerHTML += `<br>${txt}`;
 }
 
+// Calculate the center point of the eye
 function calculateEyeCenter(eyePoints) {
   let sumX = 0, sumY = 0;
   eyePoints.forEach(point => {
@@ -55,18 +53,20 @@ function calculateEyeCenter(eyePoints) {
   return { x: sumX / eyePoints.length, y: sumY / eyePoints.length };
 }
 
-function calculatePointDistance(pointA, pointB){
-
+// Calculate the distance between two points
+function calculatePointDistance(pointA, pointB) {
   return Math.sqrt(Math.pow(pointA.x - pointB.x, 2) + Math.pow(pointA.y - pointB.y, 2));
 }
 
-function findMidpoint(pointA, pointB){
-  return{
-    x: (pointA.x + pointB.x)/2,
-    y: (pointA.y + pointB.y)/2
+// Find the midpoint between two points
+function findMidpoint(pointA, pointB) {
+  return {
+    x: (pointA.x + pointB.x) / 2,
+    y: (pointA.y + pointB.y) / 2
   };
 }
 
+// Display the distance between the eyes on the canvas
 function displayEyeDistance(detections) {
   detections.forEach(detection => {
       const landmarks = detection.landmarks;
@@ -80,20 +80,20 @@ function displayEyeDistance(detections) {
 
       // Display the distance on the canvas
       let textPosition = { x: detection.detection.box.x, y: detection.detection.box.y - 10 };
-      // ctx.fillStyle = 'lightgreen';
       log(`Eye Distance: ${distance.toFixed(2)}`, textPosition.x, textPosition.y);
   });
 }
 
-function displayDistance(result){
-
+// Display the estimated distance of the face from the camera
+function displayDistance(result) {
   result.forEach(detection => {
     const distance = estimateDistance(detection.detection.box);
     log(`Distance: ${distance}`);
   });
 }
 
-function displayFaceDetail(detections){
+// Analyze face details and determine face shape
+function displayFaceDetail(detections) {
   let faceShapes = [];
   let recommendations = [];
 
@@ -101,17 +101,17 @@ function displayFaceDetail(detections){
     const landmarks = detection.landmarks;
     let foreheadWidth = calculatePointDistance(landmarks.positions[0], landmarks.positions[16]);
     let cheekboneWidth = calculatePointDistance(landmarks.positions[4], landmarks.positions[12]);
-    let jawWidth = 2*calculatePointDistance(landmarks.positions[4], landmarks.positions[8]);
+    let jawWidth = 2 * calculatePointDistance(landmarks.positions[4], landmarks.positions[8]);
     let faceLength = calculatePointDistance(landmarks.positions[27], landmarks.positions[8]);
 
     log(`Forehead Width: ${foreheadWidth}`);
     log(`Cheekbone Width: ${cheekboneWidth}`);
-    log(`jawWidth: ${jawWidth}`);
+    log(`Jaw Width: ${jawWidth}`);
     log(`Face Length: ${faceLength}`);
 
-    let ratioCheekBone = cheekboneWidth/cheekboneWidth;
-    let ratioJaw = jawWidth/cheekboneWidth;
-    let ratioLength = faceLength/cheekboneWidth;
+    let ratioCheekBone = cheekboneWidth / cheekboneWidth;
+    let ratioJaw = jawWidth / cheekboneWidth;
+    let ratioLength = faceLength / cheekboneWidth;
     let faceShape = "";
     let recommendation = "";
 
@@ -123,34 +123,15 @@ function displayFaceDetail(detections){
     else if (ratioLength > 0.9999 || ratioJaw > 1.2999) {
       faceShape = "Long";
     }
-    /**
-     * else if (ratioLength < XXXXX || ratioJaw > XXXX) {}
-     * ... ...
-     * etc etc ...
-     */
 
     let leftEyeCorner1 = landmarks.positions[36];
     let leftEyeCorner2 = landmarks.positions[39];
-
-    let left_x1 = leftEyeCorner1.x;
-    let left_y1 = leftEyeCorner1.y;
-    let left_x2 = leftEyeCorner2.x;
-    let left_y2 = leftEyeCorner2.y;
-
-    let midpointOfLeftEye = findMidpoint({x: left_x1, y: left_y1}, {x: left_x2, y: left_y2});
-
+    let midpointOfLeftEye = findMidpoint(leftEyeCorner1, leftEyeCorner2);
     log(`Midpoint of Left Eye: ${JSON.stringify(midpointOfLeftEye)}`);
 
     let rightEyeCorner1 = landmarks.positions[42];
     let rightEyeCorner2 = landmarks.positions[45];
-
-    let right_x1 = rightEyeCorner1.x;
-    let right_y1 = rightEyeCorner1.y;
-    let right_x2 = rightEyeCorner2.x;
-    let right_y2 = rightEyeCorner2.y;
-
-    let midpointOfRightEye = findMidpoint({x: right_x1, y: right_y1}, {x: right_x2, y: right_y2});
-
+    let midpointOfRightEye = findMidpoint(rightEyeCorner1, rightEyeCorner2);
     log(`Midpoint of Right Eye: ${JSON.stringify(midpointOfRightEye)}`);
 
     let leftEyeBrow = calculatePointDistance(landmarks.positions[19], midpointOfLeftEye);
@@ -159,21 +140,19 @@ function displayFaceDetail(detections){
     let rightEyeBrow = calculatePointDistance(landmarks.positions[24], midpointOfLeftEye);
     log(`Distance between right eye and right eyebrow: ${rightEyeBrow}`);
 
-    let leftEyeNose = calculatePointDistance(landmarks.positions[30],midpointOfLeftEye);
+    let leftEyeNose = calculatePointDistance(landmarks.positions[30], midpointOfLeftEye);
     log(`Distance between left eye and nose: ${leftEyeNose}`);
 
     let rightEyeNose = calculatePointDistance(landmarks.positions[30], midpointOfRightEye);
     log(`Distance between right eye and nose: ${rightEyeNose}`);
 
     faceShapes.push(faceShape);
-    
   });
 
   return faceShapes;
 }
 
-
-// helper function to draw detected faces
+// Helper function to draw detected faces on the canvas
 function drawFaces(canvas, data, fps, shapes, recommendation) {
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   if (!ctx) return;
@@ -199,18 +178,18 @@ function drawFaces(canvas, data, fps, shapes, recommendation) {
     ctx.fillText(`Expression: ${Math.round(100 * expression[0][1])}% ${expression[0][0]}`, person.detection.box.x, person.detection.box.y - 95);
     ctx.fillText(`Age: ${Math.round(person.age)} years`, person.detection.box.x, person.detection.box.y - 77);
     ctx.fillText(`Roll: ${person.angle.roll}° Pitch:${person.angle.pitch}° Yaw:${person.angle.yaw}°`, person.detection.box.x, person.detection.box.y - 59);
-    ctx.fillText(`Face Shape: ${shapes}`, person.detection.box.x, person.detection.box.y - 41)
-    ctx.fillText(`Recommended Frames: `, person.detection.box.x, person.detection.box.y - 23)
-    ctx.fillText(`${recommendation}`, person.detection.box.x, person.detection.box.y - 5)
-    
+    ctx.fillText(`Face Shape: ${shapes}`, person.detection.box.x, person.detection.box.y - 41);
+    ctx.fillText(`Recommended Frames: `, person.detection.box.x, person.detection.box.y - 23);
+    ctx.fillText(`${recommendation}`, person.detection.box.x, person.detection.box.y - 5);
+
     ctx.fillStyle = 'lightblue';
     ctx.fillText(`Gender: ${Math.round(100 * person.genderProbability)}% ${person.gender}`, person.detection.box.x, person.detection.box.y - 114);
     ctx.fillText(`Expression: ${Math.round(100 * expression[0][1])}% ${expression[0][0]}`, person.detection.box.x, person.detection.box.y - 96);
     ctx.fillText(`Age: ${Math.round(person.age)} years`, person.detection.box.x, person.detection.box.y - 78);
     ctx.fillText(`Roll: ${person.angle.roll}° Pitch:${person.angle.pitch}° Yaw:${person.angle.yaw}°`, person.detection.box.x, person.detection.box.y - 60);
-    ctx.fillText(`Face Shape: ${shapes}`, person.detection.box.x, person.detection.box.y - 42)
-    ctx.fillText(`Recommended Frames: `, person.detection.box.x, person.detection.box.y - 24)
-    ctx.fillText(`${recommendation}`, person.detection.box.x, person.detection.box.y - 6)
+    ctx.fillText(`Face Shape: ${shapes}`, person.detection.box.x, person.detection.box.y - 42);
+    ctx.fillText(`Recommended Frames: `, person.detection.box.x, person.detection.box.y - 24);
+    ctx.fillText(`${recommendation}`, person.detection.box.x, person.detection.box.y - 6);
 
     // draw face points for each face
     ctx.globalAlpha = 0.8;
@@ -221,10 +200,10 @@ function drawFaces(canvas, data, fps, shapes, recommendation) {
       ctx.arc(person.landmarks.positions[i].x, person.landmarks.positions[i].y, pointSize, 0, 2 * Math.PI);
       ctx.fill();
     }
-    
   }
 }
 
+// Main function to detect faces in the video feed
 async function detectVideo(video, canvas) {
   if (!video || video.paused) return false;
   const t0 = performance.now();
@@ -270,7 +249,7 @@ async function detectVideo(video, canvas) {
   return false;
 }
 
-// just initialize everything and call main function
+// Initialize the camera and start video feed
 async function setupCamera() {
   const video = document.getElementById('video');
   const canvas = document.getElementById('canvas');
@@ -328,49 +307,39 @@ async function setupCamera() {
   });
 }
 
+// Load FaceAPI models
 async function setupFaceAPI() {
-  // load face-api models
-  // log('Models loading');
-  // await faceapi.nets.tinyFaceDetector.load(modelPath); // using ssdMobilenetv1
   await faceapi.nets.ssdMobilenetv1.load(modelPath);
   await faceapi.nets.ageGenderNet.load(modelPath);
   await faceapi.nets.faceLandmark68Net.load(modelPath);
   await faceapi.nets.faceRecognitionNet.load(modelPath);
   await faceapi.nets.faceExpressionNet.load(modelPath);
   optionsSSDMobileNet = new faceapi.SsdMobilenetv1Options({ minConfidence: minScore, maxResults });
-  // check tf engine state
   log(`Models loaded: ${str(faceapi.tf.engine().state.numTensors)} tensors`);
 }
 
+// Main function to initialize the system
 async function main() {
-  // initialize tfjs
   log('FaceAPI WebCam Test');
 
-  // if you want to use wasm backend location for wasm binaries must be specified
-  // await faceapi.tf?.setWasmPaths(`https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${faceapi.tf.version_core}/dist/`);
-  // await faceapi.tf?.setBackend('wasm');
-  // log(`WASM SIMD: ${await faceapi.tf?.env().getAsync('WASM_HAS_SIMD_SUPPORT')} Threads: ${await faceapi.tf?.env().getAsync('WASM_HAS_MULTITHREAD_SUPPORT') ? 'Multi' : 'Single'}`);
-
-  // default is webgl backend
+  // Set backend to WebGL and initialize TensorFlow.js
   await faceapi.tf.setBackend('webgl');
   await faceapi.tf.ready();
 
-  // tfjs optimizations
+  // TensorFlow.js optimizations
   if (faceapi.tf?.env().flagRegistry.CANVAS2D_WILL_READ_FREQUENTLY) faceapi.tf.env().set('CANVAS2D_WILL_READ_FREQUENTLY', true);
   if (faceapi.tf?.env().flagRegistry.WEBGL_EXP_CONV) faceapi.tf.env().set('WEBGL_EXP_CONV', true);
-  if (faceapi.tf?.env().flagRegistry.WEBGL_EXP_CONV) faceapi.tf.env().set('WEBGL_EXP_CONV', true);
 
-  // check version
   log(`Version: FaceAPI ${str(faceapi?.version || '(not loaded)')} TensorFlow/JS ${str(faceapi.tf?.version_core || '(not loaded)')} Backend: ${str(faceapi.tf?.getBackend() || '(not loaded)')}`);
 
   await setupFaceAPI();
   await setupCamera();
 }
 
-// start processing as soon as page is loaded
+// Start processing as soon as page is loaded
 window.onload = main;
 
-
+// Detect face shapes in the video feed
 async function detectFaceShapes(video) {
     const canvas = faceapi.createCanvasFromMedia(video);
     document.body.append(canvas);
@@ -393,6 +362,7 @@ async function detectFaceShapes(video) {
 let brightnessLogElement = null; // Element to hold the brightness log
 let lastBrightnessUpdate = 0;   // Timestamp of last brightness update
 
+// Log the brightness value
 function logBrightness(brightness) {
   if (!brightnessLogElement) {
     brightnessLogElement = document.getElementById('brightnessLog'); // Assuming you have an element with id "brightnessLog"
@@ -400,6 +370,7 @@ function logBrightness(brightness) {
   brightnessLogElement.innerText = `Brightness: ${brightness.toFixed(2)}`; 
 }
 
+// Check the brightness of the video feed
 function checkBrightness(video) {
   const canvas = document.createElement('canvas');
   canvas.width = video.videoWidth;
