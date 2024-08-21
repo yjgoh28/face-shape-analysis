@@ -30,40 +30,6 @@ const minScore = 0.2; // minimum score for face detection
 const maxResults = 1; // maximum number of faces to detect
 let optionsSSDMobileNet;
 
-// Function to load image
-function loadImage(imagePath) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.src = imagePath;
-    img.onload = () => {
-      console.log('Image loaded successfully:', imagePath);
-      resolve(img);
-    };
-    img.onerror = (err) => {
-      console.error('Error loading image:', err);
-      reject(err);
-    };
-  });
-}
-
-// Function to display the loaded image on a canvas
-async function displayLoadedImage(imagePath) {
-  try {
-    const img = await loadImage(imagePath);
-    const canvas = document.getElementById('imageCanvas');
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
-      console.log('Image displayed on canvas');
-    } else {
-      console.error('Canvas element not found');
-    }
-  } catch (error) {
-    console.error(`Error loading image: ${error}`);
-  }
-}
 
 
 
@@ -132,7 +98,7 @@ function displayDistance(result) {
   });
 }
 
-// Analyze face details and determine face shape
+// Get the length of Face Feature Details
 function displayFaceDetail(detections) {
   let faceShapes = [];
   let recommendations = [];
@@ -192,6 +158,13 @@ function displayFaceDetail(detections) {
   return faceShapes;
 }
 
+function createFilterImage(filterName) {
+  const img = new Image();
+  img.src = `../filters/${filterName}.png`; // Adjust the path as needed
+  return img;
+}
+
+
 // Helper function to draw detected faces on the canvas
 function drawFaces(canvas, data, fps, shapes, recommendation) {
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -201,7 +174,9 @@ function drawFaces(canvas, data, fps, shapes, recommendation) {
   ctx.font = 'normal 20px "Segoe UI"';
   ctx.fillStyle = 'white';
   ctx.fillText(`FPS: ${fps}`, 10, 25);
-  for (const person of data) {
+  for (let i = 0; i < data.length; i++) {
+    const person = data[i];
+    const shape = shapes[i];
     // draw box around each face
     ctx.lineWidth = 3;
     ctx.strokeStyle = 'deepskyblue';
@@ -239,10 +214,28 @@ function drawFaces(canvas, data, fps, shapes, recommendation) {
       ctx.beginPath();
       ctx.arc(person.landmarks.positions[i].x, person.landmarks.positions[i].y, pointSize, 0, 2 * Math.PI);
       ctx.fill();
+    // Add filter overlay based on face shape
+    let filterImg;
+    switch (shape) {
+      case 'Oval':
+        filterImg = createFilterImage('rectangle');
+        break;
+      // case 'Long':
+      //   filterImg = createFilterImage('long_filter');
+      //   break;
+      // Add more cases for other face shapes
+      default:
+        filterImg = createFilterImage('rectangle');
+    }
+
+    // Draw the filter on the face
+    if (filterImg) {
+      const { x, y, width, height } = person.detection.box;
+      ctx.drawImage(filterImg, x, y, width, height);
     }
   }
 }
-
+}
 // Main function to detect faces in the video feed
 async function detectVideo(video, canvas) {
   if (!video || video.paused) return false;
@@ -269,13 +262,6 @@ async function detectVideo(video, canvas) {
       drawFaces(canvas, result, fps.toLocaleString(), faceShapes, recommendation);
       displayEyeDistance(result);
       displayDistance(result);
-
-      const now = Date.now();
-      if (now - lastBrightnessUpdate >= 3000) { // Check if 3 seconds have passed
-        const brightness = checkBrightness(video);
-        logBrightness(brightness); 
-        lastBrightnessUpdate = now;
-      }
 
       log(`===============================================================================`);
       requestAnimationFrame(() => detectVideo(video, canvas));
@@ -363,12 +349,6 @@ async function main() {
   log('FaceAPI WebCam Test');
 
 
-  // Call the function with the path to your image
-  try {
-    await displayLoadedImage('/glasses-img/png-clipart-glasses-rectangle-square-glasses-glass-angle.png');
-  } catch (error) {
-    console.error(`Error displaying image: ${error.message}`);
-  }
 
   // Set backend to WebGL and initialize TensorFlow.js
   await faceapi.tf.setBackend('webgl');
@@ -407,35 +387,3 @@ async function detectFaceShapes(video) {
     }, 100);
 }
 
-let brightnessLogElement = null; // Element to hold the brightness log
-let lastBrightnessUpdate = 0;   // Timestamp of last brightness update
-
-// Log the brightness value
-function logBrightness(brightness) {
-  if (!brightnessLogElement) {
-    brightnessLogElement = document.getElementById('brightnessLog'); // Assuming you have an element with id "brightnessLog"
-  }
-  brightnessLogElement.innerText = `Brightness: ${brightness.toFixed(2)}`; 
-}
-
-// Check the brightness of the video feed
-function checkBrightness(video) {
-  const canvas = document.createElement('canvas');
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const data = imageData.data;
-  let r, g, b, brightness;
-  let sum = 0;
-  for (let i = 0; i < data.length; i += 4) {
-    r = data[i];
-    g = data[i + 1];
-    b = data[i + 2];
-    brightness = (r + g + b) / 3;
-    sum += brightness;
-  }
-  const averageBrightness = sum / (canvas.width * canvas.height);
-  return averageBrightness;
-}
