@@ -22,11 +22,51 @@ function estimateDistance(box) {
 
 // import * as faceapi from '@vladmandic/face-api'; // use when downloading face-api as npm
 
+
+
 // configuration options
 const modelPath = '../model/'; // path to model folder that will be loaded using http
 const minScore = 0.2; // minimum score for face detection
 const maxResults = 1; // maximum number of faces to detect
 let optionsSSDMobileNet;
+
+// Function to load image
+function loadImage(imagePath) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.src = imagePath;
+    img.onload = () => {
+      console.log('Image loaded successfully:', imagePath);
+      resolve(img);
+    };
+    img.onerror = (err) => {
+      console.error('Error loading image:', err);
+      reject(err);
+    };
+  });
+}
+
+// Function to display the loaded image on a canvas
+async function displayLoadedImage(imagePath) {
+  try {
+    const img = await loadImage(imagePath);
+    const canvas = document.getElementById('imageCanvas');
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+      console.log('Image displayed on canvas');
+    } else {
+      console.error('Canvas element not found');
+    }
+  } catch (error) {
+    console.error(`Error loading image: ${error}`);
+  }
+}
+
+
+
 
 // Helper function to pretty-print JSON object to string
 function str(json) {
@@ -321,6 +361,14 @@ async function setupFaceAPI() {
 // Main function to initialize the system
 async function main() {
   log('FaceAPI WebCam Test');
+
+
+  // Call the function with the path to your image
+  try {
+    await displayLoadedImage('/glasses-img/png-clipart-glasses-rectangle-square-glasses-glass-angle.png');
+  } catch (error) {
+    console.error(`Error displaying image: ${error.message}`);
+  }
 
   // Set backend to WebGL and initialize TensorFlow.js
   await faceapi.tf.setBackend('webgl');
