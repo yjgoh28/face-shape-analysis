@@ -218,20 +218,20 @@ function drawFaces(canvas, data, fps, shapes, recommendation) {
     let filterImg;
     switch (shape) {
       case 'Oval':
-        filterImg = createFilterImage('rectangle');
+        filterImg = createFilterImage('circle');
         break;
       // case 'Long':
       //   filterImg = createFilterImage('long_filter');
       //   break;
       // Add more cases for other face shapes
       default:
-        filterImg = createFilterImage('rectangle');
+        filterImg = createFilterImage('cirlce');
     }
 
     // Draw the filter on the face
     if (filterImg) {
       const { x, y, width, height } = person.detection.box;
-      ctx.drawImage(filterImg, x, y, width, height);
+      ctx.drawImage(filterImg, x, y, width, height - 110);
     }
   }
 }
