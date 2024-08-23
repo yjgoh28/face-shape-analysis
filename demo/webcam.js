@@ -220,12 +220,11 @@ function drawFaces(canvas, data, fps, shapes, recommendation) {
       case 'Oval':
         filterImg = createFilterImage('circle');
         break;
-      // case 'Long':
-      //   filterImg = createFilterImage('long_filter');
-      //   break;
-      // Add more cases for other face shapes
+      case 'Long':
+        filterImg = createFilterImage('long_filter');
+        break;
       default:
-        filterImg = createFilterImage('cirlce');
+        filterImg = createFilterImage('circle');
     }
 
     // Draw the filter on the face
@@ -236,7 +235,7 @@ function drawFaces(canvas, data, fps, shapes, recommendation) {
   }
 }
 }
-// Main function to detect faces in the video feed
+
 async function detectVideo(video, canvas) {
   if (!video || video.paused) return false;
   const t0 = performance.now();
