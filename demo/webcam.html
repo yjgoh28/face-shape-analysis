@@ -10,6 +10,21 @@
     <meta name="msapplication-tooltip" content="FaceAPI: AI-powered Face Detection, Description & Recognition for Browser and NodeJS using Tensorflow/JS; Author: Vladimir Mandic <https://github.com/vladmandic>">
     <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon">
     <script src="./webcam.js" type="module"></script>
+    <style>
+        .filter-buttons {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+        }
+        .filter-buttons button {
+            margin: 0 5px;
+            padding: 10px 15px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body style="font-family: monospace; background: black; color: white; font-size: 16px; line-height: 22px; margin: 0; overflow: hidden">
     <video id="video" playsinline class="video"></video>
@@ -20,6 +35,12 @@
     <!-- Add this line for the brightness log -->
     <div id="brightnessLog" style="position: fixed; top: 0; right: 0; padding: 0.5rem; background: yellow; color: black;"></div>
 
-
+    <div class="filter-buttons">
+        <button id="aviatorBtn">Aviator</button>
+        <button id="catEyeBtn">Cat Eye</button>
+        <button id="circleBtn">Circle</button>
+        <button id="ovalBtn">Oval</button>
+        <button id="rectangleBtn">Rectangle</button>
+    </div>
 </body>
 </html>

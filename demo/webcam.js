@@ -6,6 +6,8 @@
  */
 
 import * as faceapi from '../dist/face-api.esm.js'; // use when in dev mode
+import { drawFaces } from './drawFaces.js';
+import { preloadFilterImages, filterImages } from './filterUtils.js';
 
 /**
  * Estimates the distance of the face from the camera based on the size of the bounding box.
@@ -22,7 +24,8 @@ function estimateDistance(box) {
 
 // import * as faceapi from '@vladmandic/face-api'; // use when downloading face-api as npm
 
-
+let TopLeftEyePosition = 0;
+export { TopLeftEyePosition };
 
 // configuration options
 const modelPath = '../model/'; // path to model folder that will be loaded using http
@@ -30,9 +33,12 @@ const minScore = 0.2; // minimum score for face detection
 const maxResults = 1; // maximum number of faces to detect
 let optionsSSDMobileNet;
 
+let currentFilter = 'circle'; // Default filter
 
-
-
+// Add this function to handle filter changes
+function changeFilter(filterName) {
+  currentFilter = filterName;
+}
 
 // Helper function to pretty-print JSON object to string
 function str(json) {
@@ -50,14 +56,7 @@ function log(...txt) {
 }
 
 // Calculate the center point of the eye
-function calculateEyeCenter(eyePoints) {
-  let sumX = 0, sumY = 0;
-  eyePoints.forEach(point => {
-      sumX += point.x;
-      sumY += point.y;
-  });
-  return { x: sumX / eyePoints.length, y: sumY / eyePoints.length };
-}
+
 
 // Calculate the distance between two points
 function calculatePointDistance(pointA, pointB) {
@@ -70,6 +69,15 @@ function findMidpoint(pointA, pointB) {
     x: (pointA.x + pointB.x) / 2,
     y: (pointA.y + pointB.y) / 2
   };
+}
+
+function calculateEyeCenter(eyePoints) {
+  let sumX = 0, sumY = 0;
+  eyePoints.forEach(point => {
+      sumX += point.x;
+      sumY += point.y;
+  });
+  return { x: sumX / eyePoints.length, y: sumY / eyePoints.length };
 }
 
 // Display the distance between the eyes on the canvas
@@ -87,6 +95,9 @@ function displayEyeDistance(detections) {
       // Display the distance on the canvas
       let textPosition = { x: detection.detection.box.x, y: detection.detection.box.y - 10 };
       log(`Eye Distance: ${distance.toFixed(2)}`, textPosition.x, textPosition.y);
+      log(`Left Eye Center: x=${leftEyeCenter.x.toFixed(2)}, y=${leftEyeCenter.y.toFixed(2)}`);
+
+      TopLeftEyePosition = leftEyeCenter;
   });
 }
 
@@ -158,84 +169,6 @@ function displayFaceDetail(detections) {
   return faceShapes;
 }
 
-function createFilterImage(filterName) {
-  const img = new Image();
-  img.src = `../filters/${filterName}.png`; // Adjust the path as needed
-  return img;
-}
-
-
-// Helper function to draw detected faces on the canvas
-function drawFaces(canvas, data, fps, shapes, recommendation) {
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
-  if (!ctx) return;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  // draw title
-  ctx.font = 'normal 20px "Segoe UI"';
-  ctx.fillStyle = 'white';
-  ctx.fillText(`FPS: ${fps}`, 10, 25);
-  for (let i = 0; i < data.length; i++) {
-    const person = data[i];
-    const shape = shapes[i];
-    // draw box around each face
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = 'deepskyblue';
-    ctx.fillStyle = 'deepskyblue';
-    ctx.globalAlpha = 0.6;
-    ctx.beginPath();
-    ctx.rect(person.detection.box.x, person.detection.box.y, person.detection.box.width, person.detection.box.height);
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-    // draw text labels
-    const expression = Object.entries(person.expressions).sort((a, b) => b[1] - a[1]);
-    ctx.fillStyle = 'black';
-    ctx.fillText(`Gender: ${Math.round(100 * person.genderProbability)}% ${person.gender}`, person.detection.box.x, person.detection.box.y - 113);
-    ctx.fillText(`Expression: ${Math.round(100 * expression[0][1])}% ${expression[0][0]}`, person.detection.box.x, person.detection.box.y - 95);
-    ctx.fillText(`Age: ${Math.round(person.age)} years`, person.detection.box.x, person.detection.box.y - 77);
-    ctx.fillText(`Roll: ${person.angle.roll}° Pitch:${person.angle.pitch}° Yaw:${person.angle.yaw}°`, person.detection.box.x, person.detection.box.y - 59);
-    ctx.fillText(`Face Shape: ${shapes}`, person.detection.box.x, person.detection.box.y - 41);
-    ctx.fillText(`Recommended Frames: `, person.detection.box.x, person.detection.box.y - 23);
-    ctx.fillText(`${recommendation}`, person.detection.box.x, person.detection.box.y - 5);
-
-    ctx.fillStyle = 'lightblue';
-    ctx.fillText(`Gender: ${Math.round(100 * person.genderProbability)}% ${person.gender}`, person.detection.box.x, person.detection.box.y - 114);
-    ctx.fillText(`Expression: ${Math.round(100 * expression[0][1])}% ${expression[0][0]}`, person.detection.box.x, person.detection.box.y - 96);
-    ctx.fillText(`Age: ${Math.round(person.age)} years`, person.detection.box.x, person.detection.box.y - 78);
-    ctx.fillText(`Roll: ${person.angle.roll}° Pitch:${person.angle.pitch}° Yaw:${person.angle.yaw}°`, person.detection.box.x, person.detection.box.y - 60);
-    ctx.fillText(`Face Shape: ${shapes}`, person.detection.box.x, person.detection.box.y - 42);
-    ctx.fillText(`Recommended Frames: `, person.detection.box.x, person.detection.box.y - 24);
-    ctx.fillText(`${recommendation}`, person.detection.box.x, person.detection.box.y - 6);
-
-    // draw face points for each face
-    ctx.globalAlpha = 0.8;
-    ctx.fillStyle = 'lightblue';
-    const pointSize = 2;
-    for (let i = 0; i < person.landmarks.positions.length; i++) {
-      ctx.beginPath();
-      ctx.arc(person.landmarks.positions[i].x, person.landmarks.positions[i].y, pointSize, 0, 2 * Math.PI);
-      ctx.fill();
-    // Add filter overlay based on face shape
-    let filterImg;
-    switch (shape) {
-      case 'Oval':
-        filterImg = createFilterImage('circle');
-        break;
-      case 'Long':
-        filterImg = createFilterImage('long_filter');
-        break;
-      default:
-        filterImg = createFilterImage('circle');
-    }
-
-    // Draw the filter on the face
-    if (filterImg) {
-      const { x, y, width, height } = person.detection.box;
-      ctx.drawImage(filterImg, x, y, width, height - 110);
-    }
-  }
-}
-}
-
 async function detectVideo(video, canvas) {
   if (!video || video.paused) return false;
   const t0 = performance.now();
@@ -252,10 +185,14 @@ async function detectVideo(video, canvas) {
       let recommendation = [];
       if (faceShapes == "Oval") {
         recommendation = "Square, Rectangular, Cat-eye";
-      }
-      if (faceShapes == "Long") {
+      } else if (faceShapes == "Long") {
         recommendation = "Round, Oval, Aviator";
+      } else if (faceShapes == "Diamond") {
+        recommendation = "Oval";
+      } else if (faceShapes == "Rectangle") {
+        recommendation = "Oval, Round";
       }
+
       // ... (Add more recommendations for other face shapes)
 
       drawFaces(canvas, result, fps.toLocaleString(), faceShapes, recommendation);
@@ -347,7 +284,12 @@ async function setupFaceAPI() {
 async function main() {
   log('FaceAPI WebCam Test');
 
-
+  // Set up button listeners
+  document.getElementById('aviatorBtn').addEventListener('click', () => changeFilter('aviator'));
+  document.getElementById('catEyeBtn').addEventListener('click', () => changeFilter('cat_eye'));
+  document.getElementById('circleBtn').addEventListener('click', () => changeFilter('circle'));
+  document.getElementById('ovalBtn').addEventListener('click', () => changeFilter('oval'));
+  document.getElementById('rectangleBtn').addEventListener('click', () => changeFilter('rectangle'));
 
   // Set backend to WebGL and initialize TensorFlow.js
   await faceapi.tf.setBackend('webgl');
@@ -360,6 +302,7 @@ async function main() {
   log(`Version: FaceAPI ${str(faceapi?.version || '(not loaded)')} TensorFlow/JS ${str(faceapi.tf?.version_core || '(not loaded)')} Backend: ${str(faceapi.tf?.getBackend() || '(not loaded)')}`);
 
   await setupFaceAPI();
+  await preloadFilterImages(); // Preload filter images
   await setupCamera();
 }
 
