@@ -1,26 +1,56 @@
 import { filterImages } from './filterUtils.js';
 import { TopLeftEyePosition } from './webcam.js';
+import { log } from './webcam.js';
 
-// Add this function outside of drawFaces
-function drawFilterOnFace(ctx, shape, person) {
-  let filterImg;
-  switch (shape) {
-    case 'Oval':
-      filterImg = filterImages.aviator;
-      break;
-    case 'Long':
-      filterImg = filterImages.long_filter;
-      break;
-    // Add more cases for other face shapes
-    default:
-      filterImg = filterImages.circle;
-  }
 
-  if (filterImg) {
-    const { x, y, width, height } = person.detection.box;
-    ctx.drawImage(filterImg, TopLeftEyePosition.x - 100, TopLeftEyePosition.y - 110, width, height - 100);
-  }
+
+let currentFilter = 'circle';
+let ctxvalue = null;
+let personvalue = null;
+
+
+function updateValues(newCtxValue, newPersonValue) {
+  ctxvalue = newCtxValue;
+  personvalue = newPersonValue;
 }
+
+function getValues() {
+  return { ctxvalue, personvalue };
+}
+
+export function setCurrentFilter(filterName) {
+  currentFilter = filterName;
+}
+
+export function drawFilterOnFace() {
+    const { ctxvalue, personvalue } = getValues();
+
+    let img = currentFilter;
+    switch (img) {
+      case 'aviator':
+        img = filterImages.aviator;
+        break;
+      case 'cat_eye':
+        img = filterImages.cat_eye;
+        break;
+      case 'circle':
+        img = filterImages.circle;
+        break;
+      case 'oval':
+        img = filterImages.oval;
+        break;
+      case 'rectangle':
+        img = filterImages.rectangle;
+        break;
+      default:
+        console.error('Unknown filter type');
+        return;
+    }
+
+    const { x, y, width, height } = personvalue.detection.box;
+    ctxvalue.drawImage(img, x, y, width, height - 100);
+  }
+
 
 export function drawFaces(canvas, data, fps, shapes, recommendation) {
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -30,6 +60,7 @@ export function drawFaces(canvas, data, fps, shapes, recommendation) {
   ctx.font = 'normal 20px "Segoe UI"';
   ctx.fillStyle = 'white';
   ctx.fillText(`FPS: ${fps}`, 10, 25);
+
   for (let i = 0; i < data.length; i++) {
     const person = data[i];
     const shape = shapes[i];
@@ -72,7 +103,23 @@ export function drawFaces(canvas, data, fps, shapes, recommendation) {
       ctx.fill();
     }
 
-    // Draw the filter on the face
-    drawFilterOnFace(ctx, shape, person);
+    updateValues(ctx, person);
+
+    switch (shape) {
+      case 'Oval':
+        setCurrentFilter('aviator');
+        log('aviator filter selected by shape');
+        break;
+      case 'Long':
+        setCurrentFilter('circle');
+        log('circle filter selected by shape');         
+        break;
+      // Add more cases for other face shapes
+      default:
+        setCurrentFilter('circle');
+    }
+
+    // Call drawFilterOnFace here
+    drawFilterOnFace();
   }
 }

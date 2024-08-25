@@ -6,7 +6,7 @@
  */
 
 import * as faceapi from '../dist/face-api.esm.js'; // use when in dev mode
-import { drawFaces } from './drawFaces.js';
+import { drawFaces, drawFilterOnFace , setCurrentFilter } from './drawFaces.js';
 import { preloadFilterImages, filterImages } from './filterUtils.js';
 
 /**
@@ -35,9 +35,10 @@ let optionsSSDMobileNet;
 
 let currentFilter = 'circle'; // Default filter
 
-// Add this function to handle filter changes
+// Modify the changeFilter function
 function changeFilter(filterName) {
   currentFilter = filterName;
+  setCurrentFilter(filterName);
 }
 
 // Helper function to pretty-print JSON object to string
@@ -49,7 +50,7 @@ function str(json) {
 }
 
 // Helper function to print strings to HTML document as a log
-function log(...txt) {
+export function log(...txt) {
   console.log(...txt); // eslint-disable-line no-console
   const div = document.getElementById('log');
   if (div) div.innerHTML += `<br>${txt}`;
@@ -94,8 +95,8 @@ function displayEyeDistance(detections) {
 
       // Display the distance on the canvas
       let textPosition = { x: detection.detection.box.x, y: detection.detection.box.y - 10 };
-      log(`Eye Distance: ${distance.toFixed(2)}`, textPosition.x, textPosition.y);
-      log(`Left Eye Center: x=${leftEyeCenter.x.toFixed(2)}, y=${leftEyeCenter.y.toFixed(2)}`);
+      // log(`Eye Distance: ${distance.toFixed(2)}`, textPosition.x, textPosition.y);
+      // log(`Left Eye Center: x=${leftEyeCenter.x.toFixed(2)}, y=${leftEyeCenter.y.toFixed(2)}`);
 
       TopLeftEyePosition = leftEyeCenter;
   });
@@ -105,7 +106,7 @@ function displayEyeDistance(detections) {
 function displayDistance(result) {
   result.forEach(detection => {
     const distance = estimateDistance(detection.detection.box);
-    log(`Distance: ${distance}`);
+    // log(`Distance: ${distance}`);
   });
 }
 
@@ -121,10 +122,10 @@ function displayFaceDetail(detections) {
     let jawWidth = 2 * calculatePointDistance(landmarks.positions[4], landmarks.positions[8]);
     let faceLength = calculatePointDistance(landmarks.positions[27], landmarks.positions[8]);
 
-    log(`Forehead Width: ${foreheadWidth}`);
-    log(`Cheekbone Width: ${cheekboneWidth}`);
-    log(`Jaw Width: ${jawWidth}`);
-    log(`Face Length: ${faceLength}`);
+    // log(`Forehead Width: ${foreheadWidth}`);
+    // log(`Cheekbone Width: ${cheekboneWidth}`);
+    // log(`Jaw Width: ${jawWidth}`);
+    // log(`Face Length: ${faceLength}`);
 
     let ratioCheekBone = cheekboneWidth / cheekboneWidth;
     let ratioJaw = jawWidth / cheekboneWidth;
@@ -132,7 +133,7 @@ function displayFaceDetail(detections) {
     let faceShape = "";
     let recommendation = "";
 
-    log(`All Ratio = ${ratioJaw} : ${ratioCheekBone} : ${ratioLength}`);
+    // log(`All Ratio = ${ratioJaw} : ${ratioCheekBone} : ${ratioLength}`);
 
     if (ratioLength <= 0.9999 || ratioJaw <= 1.2999) {
       faceShape = "Oval";
@@ -144,24 +145,24 @@ function displayFaceDetail(detections) {
     let leftEyeCorner1 = landmarks.positions[36];
     let leftEyeCorner2 = landmarks.positions[39];
     let midpointOfLeftEye = findMidpoint(leftEyeCorner1, leftEyeCorner2);
-    log(`Midpoint of Left Eye: ${JSON.stringify(midpointOfLeftEye)}`);
+    // log(`Midpoint of Left Eye: ${JSON.stringify(midpointOfLeftEye)}`);
 
     let rightEyeCorner1 = landmarks.positions[42];
     let rightEyeCorner2 = landmarks.positions[45];
     let midpointOfRightEye = findMidpoint(rightEyeCorner1, rightEyeCorner2);
-    log(`Midpoint of Right Eye: ${JSON.stringify(midpointOfRightEye)}`);
+    // log(`Midpoint of Right Eye: ${JSON.stringify(midpointOfRightEye)}`);
 
     let leftEyeBrow = calculatePointDistance(landmarks.positions[19], midpointOfLeftEye);
-    log(`Distance between left eye and left eyebrow: ${leftEyeBrow}`);
+    // log(`Distance between left eye and left eyebrow: ${leftEyeBrow}`);
 
     let rightEyeBrow = calculatePointDistance(landmarks.positions[24], midpointOfLeftEye);
-    log(`Distance between right eye and right eyebrow: ${rightEyeBrow}`);
+    // log(`Distance between right eye and right eyebrow: ${rightEyeBrow}`);
 
     let leftEyeNose = calculatePointDistance(landmarks.positions[30], midpointOfLeftEye);
-    log(`Distance between left eye and nose: ${leftEyeNose}`);
+    // log(`Distance between left eye and nose: ${leftEyeNose}`);
 
     let rightEyeNose = calculatePointDistance(landmarks.positions[30], midpointOfRightEye);
-    log(`Distance between right eye and nose: ${rightEyeNose}`);
+    // log(`Distance between right eye and nose: ${rightEyeNose}`);
 
     faceShapes.push(faceShape);
   });
@@ -196,10 +197,11 @@ async function detectVideo(video, canvas) {
       // ... (Add more recommendations for other face shapes)
 
       drawFaces(canvas, result, fps.toLocaleString(), faceShapes, recommendation);
+      // drawFilterOnFace(); // Call drawFilterOnFace here
       displayEyeDistance(result);
       displayDistance(result);
 
-      log(`===============================================================================`);
+      // log(`===============================================================================`);
       requestAnimationFrame(() => detectVideo(video, canvas));
       return true;
     })
@@ -285,11 +287,26 @@ async function main() {
   log('FaceAPI WebCam Test');
 
   // Set up button listeners
-  document.getElementById('aviatorBtn').addEventListener('click', () => changeFilter('aviator'));
-  document.getElementById('catEyeBtn').addEventListener('click', () => changeFilter('cat_eye'));
-  document.getElementById('circleBtn').addEventListener('click', () => changeFilter('circle'));
-  document.getElementById('ovalBtn').addEventListener('click', () => changeFilter('oval'));
-  document.getElementById('rectangleBtn').addEventListener('click', () => changeFilter('rectangle'));
+  document.getElementById('aviatorBtn').addEventListener('click', () => {
+    setCurrentFilter('aviator');
+    console.log('Aviator filter selected');
+  });
+  document.getElementById('catEyeBtn').addEventListener('click', () => {
+    setCurrentFilter('cat_eye');
+    console.log('Cat Eye filter selected');
+  });
+  document.getElementById('circleBtn').addEventListener('click', () => {
+    setCurrentFilter('circle');
+    console.log('Circle filter selected');
+  });
+  document.getElementById('ovalBtn').addEventListener('click', () => {
+    setCurrentFilter('oval');
+    console.log('Oval filter selected');
+  });
+  document.getElementById('rectangleBtn').addEventListener('click', () => {
+    setCurrentFilter('rectangle');
+    console.log('Rectangle filter selected');
+  });
 
   // Set backend to WebGL and initialize TensorFlow.js
   await faceapi.tf.setBackend('webgl');
@@ -328,4 +345,3 @@ async function detectFaceShapes(video) {
         faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
     }, 100);
 }
-
