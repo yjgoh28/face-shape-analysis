@@ -7,6 +7,7 @@ import { log } from './webcam.js';
 let currentFilter = 'circle';
 let ctxvalue = null;
 let personvalue = null;
+let previousShape = null;
 
 
 function updateValues(newCtxValue, newPersonValue) {
@@ -104,19 +105,23 @@ export function drawFaces(canvas, data, fps, shapes, recommendation) {
     }
 
     updateValues(ctx, person);
-
-    switch (shape) {
-      case 'Oval':
-        setCurrentFilter('aviator');
-        log('aviator filter selected by shape');
-        break;
-      case 'Long':
-        setCurrentFilter('circle');
-        log('circle filter selected by shape');         
-        break;
-      // Add more cases for other face shapes
-      default:
-        setCurrentFilter('circle');
+    
+    const currentShape = shapes[i];
+    if (currentShape !== previousShape) {
+      switch (currentShape) {
+        case 'Oval':
+          setCurrentFilter('aviator');
+          log('aviator filter selected by shape');
+          break;
+        case 'Long':
+          setCurrentFilter('circle');
+          log('circle filter selected by shape');         
+          break;
+        // Add more cases for other face shapes
+        default:
+          setCurrentFilter('circle');
+      }
+      previousShape = currentShape;
     }
 
     // Call drawFilterOnFace here
