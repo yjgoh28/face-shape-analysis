@@ -226,9 +226,7 @@ async function setupCamera() {
     return null;
   }
   let stream;
-  const constraints = { audio: false, video: { facingMode: 'user', resizeMode: 'crop-and-scale' } };
-  if (window.innerWidth > window.innerHeight) constraints.video.width = { ideal: window.innerWidth };
-  else constraints.video.height = { ideal: window.innerHeight };
+  const constraints = { audio: false, video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } } };
   try {
     stream = await navigator.mediaDevices.getUserMedia(constraints);
   } catch (err) {
