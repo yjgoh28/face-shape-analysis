@@ -305,6 +305,10 @@ async function main() {
     setCurrentFilter('rectangle');
     console.log('Rectangle filter selected');
   });
+  document.getElementById('findShopBtn').addEventListener('click', () => {
+    console.log('Finding nearest spectacle shop...');
+    initMap();
+  });
 
   // Set backend to WebGL and initialize TensorFlow.js
   await faceapi.tf.setBackend('webgl');

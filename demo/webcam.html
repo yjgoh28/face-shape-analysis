@@ -10,6 +10,8 @@
     <meta name="msapplication-tooltip" content="FaceAPI: AI-powered Face Detection, Description & Recognition for Browser and NodeJS using Tensorflow/JS; Author: Vladimir Mandic <https://github.com/vladmandic>">
     <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon">
     <script src="./webcam.js" type="module"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBWdvclL5pjBEhSCDyidzdQwA_mwH9Rn0o&libraries=places"></script>
+    <script src="./nearestSpectacleShop.js"></script>
     <style>
         .filter-buttons {
             position: fixed;
@@ -24,9 +26,41 @@
             font-size: 16px;
             cursor: pointer;
         }
+        #map {
+            height: 300px;
+            width: 100%;
+            margin-top: 20px;
+        }
+        #map-container {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 80%;
+            background: white;
+            z-index: 1000;
+            padding: 40px 20px 20px 20px; /* Increased top padding */
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+        #close-map {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            background-color: white;
+            border: 1px solid black;
+            padding: 5px 10px;
+            z-index: 1002; /* Increased z-index */
+        }
     </style>
 </head>
-<body style="font-family: monospace; background: black; color: white; font-size: 16px; line-height: 22px; margin: 0; overflow: hidden">
+<body style="font-family: monospace; background: black; color: white; font-size: 16px; line-height: 22px; margin: 0; overflow-y: auto;">
     <video id="video" playsinline class="video"></video>
     <canvas id="canvas" class="canvas" style="position: fixed; top: 0; left: 0; z-index: 10"></canvas>
     
@@ -35,12 +69,28 @@
     <!-- Add this line for the brightness log -->
     <div id="brightnessLog" style="position: fixed; top: 0; right: 0; padding: 0.5rem; background: yellow; color: black;"></div>
 
+    <div id="map-container">
+        <div id="close-map">X</div>
+        <div id="map"></div>
+    </div>
+
     <div class="filter-buttons">
         <button id="aviatorBtn">Aviator</button>
         <button id="catEyeBtn">Cat Eye</button>
         <button id="circleBtn">Circle</button>
         <button id="ovalBtn">Oval</button>
         <button id="rectangleBtn">Rectangle</button>
+        <button id="findShopBtn">Find Nearest Spectacle Shop</button>
     </div>
+
+    <script>
+        document.getElementById('findShopBtn').addEventListener('click', () => {
+            document.getElementById('map-container').style.display = 'block';
+            initMap();
+        });
+        document.getElementById('close-map').addEventListener('click', () => {
+            document.getElementById('map-container').style.display = 'none';
+        });
+    </script>
 </body>
 </html>
