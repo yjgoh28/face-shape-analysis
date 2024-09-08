@@ -9,6 +9,8 @@ let ctxvalue = null;
 let personvalue = null;
 let previousShape = null;
 
+const toplefteyebrowvalue = 1;
+
 
 function updateValues(newCtxValue, newPersonValue) {
   ctxvalue = newCtxValue;
@@ -23,34 +25,50 @@ export function setCurrentFilter(filterName) {
   currentFilter = filterName;
 }
 
+
+
 export function drawFilterOnFace() {
-    const { ctxvalue, personvalue } = getValues();
-
-    let img = currentFilter;
-    switch (img) {
-      case 'aviator':
-        img = filterImages.aviator;
-        break;
-      case 'cat_eye':
-        img = filterImages.cat_eye;
-        break;
-      case 'circle':
-        img = filterImages.circle;
-        break;
-      case 'oval':
-        img = filterImages.oval;
-        break;
-      case 'rectangle':
-        img = filterImages.rectangle;
-        break;
-      default:
-        console.error('Unknown filter type');
-        return;
-    }
-
-    const { x, y, width, height } = personvalue.detection.box;
-    ctxvalue.drawImage(img, x, y, width, height - 100);
+  const { ctxvalue, personvalue } = getValues();
+  
+  let img = currentFilter;
+  switch (img) {
+    case 'aviator':
+      img = filterImages.aviator;
+      break;
+    case 'cat_eye':
+      img = filterImages.cat_eye;
+      break;
+    case 'circle':
+      img = filterImages.circle;
+      break;
+    case 'oval':
+      img = filterImages.oval;
+      break;
+    case 'rectangle':
+      img = filterImages.rectangle;
+      break;
+    default:
+      console.error('Unknown filter type');
+      return;
   }
+
+  const { x, y, width, height } = personvalue.detection.box;
+  
+  // Use specific landmark points for positioning
+  const leftEye = personvalue.landmarks.getLeftEye()[0];
+  const rightEye = personvalue.landmarks.getRightEye()[3];
+  
+  // Calculate filter dimensions based on face size, but make it larger
+  const filterWidth = (rightEye.x - leftEye.x) * 1.5; // Increase width by 50%
+  const filterHeight = filterWidth * (img.height / img.width); // Maintain aspect ratio
+  
+  // Position the filter centered between the eyes
+  const filterX = leftEye.x - (filterWidth - (rightEye.x - leftEye.x)) / 2;
+  const filterY = leftEye.y - filterHeight / 2;
+
+  // Draw the image with calculated dimensions
+  ctxvalue.drawImage(img, filterX, filterY, filterWidth, filterHeight);
+}
 
 
 export function drawFaces(canvas, data, fps, shapes, recommendation) {
@@ -94,17 +112,30 @@ export function drawFaces(canvas, data, fps, shapes, recommendation) {
     ctx.fillText(`Recommended Frames: `, person.detection.box.x, person.detection.box.y - 24);
     ctx.fillText(`${recommendation}`, person.detection.box.x, person.detection.box.y - 6);
 
+    updateValues(ctx, person);
+
     // draw face points for each face
     ctx.globalAlpha = 0.8;
     ctx.fillStyle = 'lightblue';
     const pointSize = 2;
+
+    const testvalue = 17;
+    const testvalue2 = 36;
     for (let i = 0; i < person.landmarks.positions.length; i++) {
+    // for (let i = 35; i < 37; i++) {
+    
       ctx.beginPath();
       ctx.arc(person.landmarks.positions[i].x, person.landmarks.positions[i].y, pointSize, 0, 2 * Math.PI);
+      
+      // ctx.arc(person.landmarks.positions[testvalue].x, person.landmarks.positions[testvalue].y, pointSize, 0, 2 * Math.PI);
+      // ctx.arc(person.landmarks.positions[testvalue2].x, person.landmarks.positions[testvalue2].y, pointSize, 0, 2 * Math.PI);
       ctx.fill();
     }
 
-    updateValues(ctx, person);
+    log(`Number of landmark positions: ${person.landmarks.positions.length}`);
+
+    
+    
     
     const currentShape = shapes[i];
     if (currentShape !== previousShape) {
