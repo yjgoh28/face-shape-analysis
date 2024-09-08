@@ -8,6 +8,7 @@
 import * as faceapi from '../dist/face-api.esm.js'; // use when in dev mode
 import { drawFaces, drawFilterOnFace , setCurrentFilter } from './drawFaces.js';
 import { preloadFilterImages, filterImages } from './filterUtils.js';
+import { findNearestSpectacleShops } from './nearestSpectacleShop.js';
 
 /**
  * Estimates the distance of the face from the camera based on the size of the bounding box.
@@ -141,6 +142,7 @@ function displayFaceDetail(detections) {
     else if (ratioLength > 0.9999 || ratioJaw > 1.2999) {
       faceShape = "Long";
     }
+
 
     let leftEyeCorner1 = landmarks.positions[36];
     let leftEyeCorner2 = landmarks.positions[39];
@@ -306,8 +308,8 @@ async function main() {
     console.log('Rectangle filter selected');
   });
   document.getElementById('findShopBtn').addEventListener('click', () => {
-    console.log('Finding nearest spectacle shop...');
-    initMap();
+    console.log('Finding nearest spectacle shops...');
+    findNearestSpectacleShops();
   });
 
   // Set backend to WebGL and initialize TensorFlow.js

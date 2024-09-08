@@ -11,7 +11,7 @@
     <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon">
     <script src="./webcam.js" type="module"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBWdvclL5pjBEhSCDyidzdQwA_mwH9Rn0o&libraries=places"></script>
-    <script src="./nearestSpectacleShop.js"></script>
+    <script src="./nearestSpectacleShop.js" type="module"></script>
     <style>
         .filter-buttons {
             position: fixed;
@@ -58,6 +58,19 @@
             padding: 5px 10px;
             z-index: 1002; /* Increased z-index */
         }
+        #sidebar {
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: 300px;
+            height: 100%;
+            background: white;
+            color: black;
+            overflow-y: auto;
+            padding: 20px;
+            display: none;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body style="font-family: monospace; background: black; color: white; font-size: 16px; line-height: 22px; margin: 0; overflow-y: auto;">
@@ -69,11 +82,6 @@
     <!-- Add this line for the brightness log -->
     <div id="brightnessLog" style="position: fixed; top: 0; right: 0; padding: 0.5rem; background: yellow; color: black;"></div>
 
-    <div id="map-container">
-        <div id="close-map">X</div>
-        <div id="map"></div>
-    </div>
-
     <div class="filter-buttons">
         <button id="aviatorBtn">Aviator</button>
         <button id="catEyeBtn">Cat Eye</button>
@@ -83,14 +91,10 @@
         <button id="findShopBtn">Find Nearest Spectacle Shop</button>
     </div>
 
-    <script>
-        document.getElementById('findShopBtn').addEventListener('click', () => {
-            document.getElementById('map-container').style.display = 'block';
-            initMap();
-        });
-        document.getElementById('close-map').addEventListener('click', () => {
-            document.getElementById('map-container').style.display = 'none';
-        });
-    </script>
+    <!-- Add this right before the closing </body> tag -->
+    <div id="sidebar">
+        <h2>Nearby Spectacle Shops</h2>
+        <div id="shop-list"></div>
+    </div>
 </body>
 </html>
