@@ -90,12 +90,14 @@ function createMarker(place, openInfoWindow = false) {
   });
 
   google.maps.event.addListener(marker, "click", () => {
+    const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}&query_place_id=${place.place_id}`;
     const content = `
       <div style="color: #333; padding: 10px;">
         <strong style="font-size: 16px;">${place.name}</strong><br>
         <span style="font-size: 14px;">
           Address: ${place.vicinity}<br>
-          Rating: ${place.rating ? place.rating + '/5' : 'N/A'}
+          Rating: ${place.rating ? place.rating + '/5' : 'N/A'}<br>
+          <a href="${googleMapsUrl}" target="_blank" style="color: #1a73e8; text-decoration: none;">View on Google Maps</a>
         </span>
       </div>
     `;
