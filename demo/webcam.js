@@ -114,7 +114,6 @@ function displayDistance(result) {
 // Get the length of Face Feature Details
 function displayFaceDetail(detections) {
   let faceShapes = [];
-  let recommendations = [];
 
   detections.forEach(detection => {
     const landmarks = detection.landmarks;
@@ -123,48 +122,40 @@ function displayFaceDetail(detections) {
     let jawWidth = 2 * calculatePointDistance(landmarks.positions[4], landmarks.positions[8]);
     let faceLength = calculatePointDistance(landmarks.positions[27], landmarks.positions[8]);
 
-    // log(`Forehead Width: ${foreheadWidth}`);
-    // log(`Cheekbone Width: ${cheekboneWidth}`);
-    // log(`Jaw Width: ${jawWidth}`);
-    // log(`Face Length: ${faceLength}`);
-
-    let ratioCheekBone = cheekboneWidth / cheekboneWidth;
     let ratioJaw = jawWidth / cheekboneWidth;
     let ratioLength = faceLength / cheekboneWidth;
+    let ratioForehead = foreheadWidth / jawWidth;
+
     let faceShape = "";
-    let recommendation = "";
 
-    // log(`All Ratio = ${ratioJaw} : ${ratioCheekBone} : ${ratioLength}`);
-
-    if (ratioLength <= 0.9999 || ratioJaw <= 1.2999) {
-      faceShape = "Oval";
-    } 
-    else if (ratioLength > 0.9999 || ratioJaw > 1.2999) {
-      faceShape = "Long";
+    // Determine face shape based on ratios
+    if (ratioLength <= 1.1) {
+      if (ratioJaw >= 0.78 && ratioJaw <= 0.84) {
+        faceShape = "Round";
+      } else if (ratioJaw < 0.78) {
+        faceShape = "Oval";
+      } else if (ratioJaw > 0.84) {
+        faceShape = "Square";
+      }
+    } else if (ratioLength > 1.1) {
+      if (ratioJaw < 0.8) {
+        faceShape = "Diamond";
+      } else if (ratioJaw >= 0.8 && ratioJaw <= 0.84) {
+        faceShape = "Oblong";
+      } else {
+        faceShape = "Rectangle";
+      }
     }
 
+    // Check for heart-shaped face
+    if (ratioForehead > 1.1 && ratioJaw < 0.8) {
+      faceShape = "Heart";
+    }
 
-    let leftEyeCorner1 = landmarks.positions[36];
-    let leftEyeCorner2 = landmarks.positions[39];
-    let midpointOfLeftEye = findMidpoint(leftEyeCorner1, leftEyeCorner2);
-    // log(`Midpoint of Left Eye: ${JSON.stringify(midpointOfLeftEye)}`);
-
-    let rightEyeCorner1 = landmarks.positions[42];
-    let rightEyeCorner2 = landmarks.positions[45];
-    let midpointOfRightEye = findMidpoint(rightEyeCorner1, rightEyeCorner2);
-    // log(`Midpoint of Right Eye: ${JSON.stringify(midpointOfRightEye)}`);
-
-    let leftEyeBrow = calculatePointDistance(landmarks.positions[19], midpointOfLeftEye);
-    // log(`Distance between left eye and left eyebrow: ${leftEyeBrow}`);
-
-    let rightEyeBrow = calculatePointDistance(landmarks.positions[24], midpointOfLeftEye);
-    // log(`Distance between right eye and right eyebrow: ${rightEyeBrow}`);
-
-    let leftEyeNose = calculatePointDistance(landmarks.positions[30], midpointOfLeftEye);
-    // log(`Distance between left eye and nose: ${leftEyeNose}`);
-
-    let rightEyeNose = calculatePointDistance(landmarks.positions[30], midpointOfRightEye);
-    // log(`Distance between right eye and nose: ${rightEyeNose}`);
+    // Check for triangle-shaped face
+    if (ratioForehead < 0.9 && ratioJaw > 0.84) {
+      faceShape = "Triangle";
+    }
 
     faceShapes.push(faceShape);
   });
