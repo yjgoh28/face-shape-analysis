@@ -58,13 +58,38 @@ export function drawFilterOnFace() {
   const leftEye = personvalue.landmarks.getLeftEye()[0];
   const rightEye = personvalue.landmarks.getRightEye()[3];
   
-  // Calculate filter dimensions based on face size, but make it larger
-  const filterWidth = (rightEye.x - leftEye.x) * 1.5; // Increase width by 50%
-  const filterHeight = filterWidth * (img.height / img.width); // Maintain aspect ratio
+  // Calculate filter dimensions based on face size
+  let filterWidth, filterHeight;
+  
+  // Calculate the distance between eyes
+  const eyeDistance = rightEye.x - leftEye.x;
+
+  // Adjust filter size based on the filter type and eye distance
+  switch (currentFilter) {
+    case 'rectangle':
+      filterWidth = eyeDistance * 2.5;
+      filterHeight = filterWidth * 0.4;
+      break;
+    case 'aviator':
+      filterWidth = eyeDistance * 2;
+      filterHeight = filterWidth * 0.5;
+      break;
+    case 'cat_eye':
+      filterWidth = eyeDistance * 1.5;
+      filterHeight = filterWidth * 0.45;
+      break;
+    case 'circle':
+      filterWidth = eyeDistance * 1.7;
+      filterHeight = filterWidth * 0.75;
+      break;
+    default:
+      filterWidth = eyeDistance * 1.5;
+      filterHeight = filterWidth * (img.height / img.width);
+  }
   
   // Position the filter centered between the eyes
-  const filterX = leftEye.x - (filterWidth - (rightEye.x - leftEye.x)) / 2;
-  const filterY = leftEye.y - filterHeight / 2;
+  const filterX = leftEye.x - (filterWidth - eyeDistance) / 2;
+  const filterY = leftEye.y - filterHeight / 2; // Adjust this value to move the filter up or down
 
   // Draw the image with calculated dimensions
   ctxvalue.drawImage(img, filterX, filterY, filterWidth, filterHeight);
@@ -89,25 +114,15 @@ export function drawFaces(canvas, data, fps, shapes, recommendation) {
     ctx.fillStyle = 'deepskyblue';
     ctx.globalAlpha = 0.6;
     ctx.beginPath();
-    ctx.rect(person.detection.box.x, person.detection.box.y, person.detection.box.width, person.detection.box.height);
+    // ctx.rect(person.detection.box.x, person.detection.box.y, person.detection.box.width, person.detection.box.height);
     ctx.stroke();
     ctx.globalAlpha = 1;
     // draw text labels
     const expression = Object.entries(person.expressions).sort((a, b) => b[1] - a[1]);
-    ctx.fillStyle = 'black';
-    ctx.fillText(`Gender: ${Math.round(100 * person.genderProbability)}% ${person.gender}`, person.detection.box.x, person.detection.box.y - 113);
-    ctx.fillText(`Expression: ${Math.round(100 * expression[0][1])}% ${expression[0][0]}`, person.detection.box.x, person.detection.box.y - 95);
-    ctx.fillText(`Age: ${Math.round(person.age)} years`, person.detection.box.x, person.detection.box.y - 77);
-    ctx.fillText(`Roll: ${person.angle.roll}° Pitch:${person.angle.pitch}° Yaw:${person.angle.yaw}°`, person.detection.box.x, person.detection.box.y - 59);
-    ctx.fillText(`Face Shape: ${shapes}`, person.detection.box.x, person.detection.box.y - 41);
-    ctx.fillText(`Recommended Frames: `, person.detection.box.x, person.detection.box.y - 23);
-    ctx.fillText(`${recommendation}`, person.detection.box.x, person.detection.box.y - 5);
+
+
 
     ctx.fillStyle = 'lightblue';
-    ctx.fillText(`Gender: ${Math.round(100 * person.genderProbability)}% ${person.gender}`, person.detection.box.x, person.detection.box.y - 114);
-    ctx.fillText(`Expression: ${Math.round(100 * expression[0][1])}% ${expression[0][0]}`, person.detection.box.x, person.detection.box.y - 96);
-    ctx.fillText(`Age: ${Math.round(person.age)} years`, person.detection.box.x, person.detection.box.y - 78);
-    ctx.fillText(`Roll: ${person.angle.roll}° Pitch:${person.angle.pitch}° Yaw:${person.angle.yaw}°`, person.detection.box.x, person.detection.box.y - 60);
     ctx.fillText(`Face Shape: ${shapes}`, person.detection.box.x, person.detection.box.y - 42);
     ctx.fillText(`Recommended Frames: `, person.detection.box.x, person.detection.box.y - 24);
     ctx.fillText(`${recommendation}`, person.detection.box.x, person.detection.box.y - 6);

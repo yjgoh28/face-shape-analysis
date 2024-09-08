@@ -36,11 +36,6 @@ let optionsSSDMobileNet;
 
 let currentFilter = 'circle'; // Default filter
 
-// Modify the changeFilter function
-function changeFilter(filterName) {
-  currentFilter = filterName;
-  setCurrentFilter(filterName);
-}
 
 // Helper function to pretty-print JSON object to string
 function str(json) {
@@ -119,42 +114,47 @@ function displayFaceDetail(detections) {
     const landmarks = detection.landmarks;
     let foreheadWidth = calculatePointDistance(landmarks.positions[0], landmarks.positions[16]);
     let cheekboneWidth = calculatePointDistance(landmarks.positions[4], landmarks.positions[12]);
-    let jawWidth = 2 * calculatePointDistance(landmarks.positions[4], landmarks.positions[8]);
+    let jawWidth = calculatePointDistance(landmarks.positions[2], landmarks.positions[14]);
     let faceLength = calculatePointDistance(landmarks.positions[27], landmarks.positions[8]);
+    let chinLength = calculatePointDistance(landmarks.positions[8], landmarks.positions[57]);
 
-    let ratioJaw = jawWidth / cheekboneWidth;
-    let ratioLength = faceLength / cheekboneWidth;
-    let ratioForehead = foreheadWidth / jawWidth;
+    let ratioWidthToLength = cheekboneWidth / faceLength;
+    let ratioJawToCheekbone = jawWidth / cheekboneWidth;
+    let ratioForeheadToCheekbone = foreheadWidth / cheekboneWidth;
+    let ratioChinToJaw = chinLength / jawWidth;
 
     let faceShape = "";
 
-    // Determine face shape based on ratios
-    if (ratioLength <= 1.1) {
-      if (ratioJaw >= 0.78 && ratioJaw <= 0.84) {
-        faceShape = "Round";
-      } else if (ratioJaw < 0.78) {
-        faceShape = "Oval";
-      } else if (ratioJaw > 0.84) {
-        faceShape = "Square";
-      }
-    } else if (ratioLength > 1.1) {
-      if (ratioJaw < 0.8) {
-        faceShape = "Diamond";
-      } else if (ratioJaw >= 0.8 && ratioJaw <= 0.84) {
-        faceShape = "Oblong";
-      } else {
-        faceShape = "Rectangle";
-      }
+    // Round face
+    if (Math.abs(cheekboneWidth - faceLength) < 10 && ratioJawToCheekbone > 0.9) {
+      faceShape = "Round";
     }
-
-    // Check for heart-shaped face
-    if (ratioForehead > 1.1 && ratioJaw < 0.8) {
+    // Square face
+    else if (ratioForeheadToCheekbone > 0.95 && ratioJawToCheekbone > 0.95 && ratioWidthToLength > 0.9) {
+      faceShape = "Square";
+    }
+    // Oval face
+    else if (ratioForeheadToCheekbone < 0.95 && ratioWidthToLength < 0.85 && ratioJawToCheekbone < 0.9) {
+      faceShape = "Oval";
+    }
+    // Diamond face
+    else if (ratioForeheadToCheekbone < 0.9 && ratioJawToCheekbone < 0.9 && ratioChinToJaw < 0.6) {
+      faceShape = "Diamond";
+    }
+    // Rectangular face
+    else if (ratioWidthToLength < 0.85 && ratioForeheadToCheekbone > 0.95 && ratioJawToCheekbone > 0.95) {
+      faceShape = "Rectangular";
+    }
+    // Triangle face
+    else if (ratioJawToCheekbone < 0.85 && ratioForeheadToCheekbone > 1.05) {
+      faceShape = "Triangle";
+    }
+    // Heart face (inverted triangle)
+    else if (ratioJawToCheekbone < 0.85 && ratioForeheadToCheekbone > 1.05 && ratioChinToJaw < 0.6) {
       faceShape = "Heart";
     }
-
-    // Check for triangle-shaped face
-    if (ratioForehead < 0.9 && ratioJaw > 0.84) {
-      faceShape = "Triangle";
+    else {
+      faceShape = "Undefined";
     }
 
     faceShapes.push(faceShape);
@@ -176,25 +176,42 @@ async function detectVideo(video, canvas) {
     .then((result) => {
       const fps = 1000 / (performance.now() - t0);
       const faceShapes = displayFaceDetail(result);
-      let recommendation = [];
-      if (faceShapes == "Oval") {
-        recommendation = "Square, Rectangular, Cat-eye";
-      } else if (faceShapes == "Long") {
-        recommendation = "Round, Oval, Aviator";
-      } else if (faceShapes == "Diamond") {
-        recommendation = "Oval";
-      } else if (faceShapes == "Rectangle") {
-        recommendation = "Oval, Round";
-      }
+      let recommendations = [];
 
-      // ... (Add more recommendations for other face shapes)
+      faceShapes.forEach(faceShape => {
+        let recommendation;
+        switch(faceShape) {
+          case "Oval":
+            recommendation = "Rectangle, Cat-eye, Aviator";
+            break;
+          case "Round":
+            recommendation = "Rectangle";
+            break;
+          case "Square":
+            recommendation = "Circle, Oval, Aviator";
+            break;
+          case "Diamond":
+            recommendation = "Oval, Cat-eye";
+            break;
+          case "Rectangular":
+            recommendation = "Circle, Oval";
+            break;
+          case "Triangle":
+            recommendation = "Cat-eye, Aviator";
+            break;
+          case "Heart":
+            recommendation = "Circle, Oval";
+            break;
+          default:
+            recommendation = "Unable to determine suitable frames";
+        }
+        recommendations.push(recommendation);
+      });
 
-      drawFaces(canvas, result, fps.toLocaleString(), faceShapes, recommendation);
-      // drawFilterOnFace(); // Call drawFilterOnFace here
+      drawFaces(canvas, result, fps.toLocaleString(), faceShapes, recommendations);
       displayEyeDistance(result);
       displayDistance(result);
 
-      // log(`===============================================================================`);
       requestAnimationFrame(() => detectVideo(video, canvas));
       return true;
     })
