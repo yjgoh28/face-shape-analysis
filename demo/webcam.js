@@ -126,33 +126,25 @@ function displayFaceDetail(detections) {
     let faceShape = "";
 
     // Round face
-    if (Math.abs(cheekboneWidth - faceLength) < 10 && ratioJawToCheekbone > 0.9) {
-      faceShape = "Round";
-    }
     // Square face
-    else if (ratioForeheadToCheekbone > 0.95 && ratioJawToCheekbone > 0.95 && ratioWidthToLength > 0.9) {
-      faceShape = "Square";
-    }
+
     // Oval face
-    else if (ratioForeheadToCheekbone < 0.95 && ratioWidthToLength < 0.85 && ratioJawToCheekbone < 0.9) {
+    if (ratioForeheadToCheekbone >0.9 && ratioWidthToLength <1.05) {
       faceShape = "Oval";
     }
-    // Diamond face
-    else if (ratioForeheadToCheekbone < 0.9 && ratioJawToCheekbone < 0.9 && ratioChinToJaw < 0.6) {
-      faceShape = "Diamond";
+    else if (ratioForeheadToCheekbone > 0.8 && ratioForeheadToCheekbone < 1.25) {
+      faceShape = "Square";
     }
-    // Rectangular face
-    else if (ratioWidthToLength < 0.85 && ratioForeheadToCheekbone > 0.95 && ratioJawToCheekbone > 0.95) {
-      faceShape = "Rectangular";
-    }
-    // Triangle face
-    else if (ratioJawToCheekbone < 0.85 && ratioForeheadToCheekbone > 1.05) {
-      faceShape = "Triangle";
-    }
-    // Heart face (inverted triangle)
-    else if (ratioJawToCheekbone < 0.85 && ratioForeheadToCheekbone > 1.05 && ratioChinToJaw < 0.6) {
+    else if (ratioForeheadToCheekbone > 0.8 && ratioForeheadToCheekbone < 1.25 && ratioWidthToLength < 1.05) {
       faceShape = "Heart";
     }
+    // Diamond face
+    else if (ratioForeheadToCheekbone >0.999 && ratioJawToCheekbone > 0.999 && ratioWidthToLength >0.85 ) {
+      faceShape = "Diamond";
+    }
+
+
+    // Heart face (inverted triangle)
     else {
       faceShape = "Undefined";
     }

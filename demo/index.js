@@ -23,7 +23,36 @@ function log(...txt) {
   const div = document.getElementById('log');
   if (div) div.innerHTML += `<br>${txt}`;
 }
+function determineFaceShape(landmarks) {
+  const positions = landmarks.positions;
+  let foreheadWidth = calculatePointDistance(positions[0], positions[16]);
+  let cheekboneWidth = calculatePointDistance(positions[4], positions[12]);
+  let jawWidth = calculatePointDistance(positions[2], positions[14]);
+  let faceLength = calculatePointDistance(positions[27], positions[8]);
+  let chinLength = calculatePointDistance(positions[8], positions[57]);
 
+  let ratioWidthToLength = cheekboneWidth / faceLength;
+  let ratioJawToCheekbone = jawWidth / cheekboneWidth;
+  let ratioForeheadToCheekbone = foreheadWidth / cheekboneWidth;
+  let ratioChinToJaw = chinLength / jawWidth;
+
+  if (ratioForeheadToCheekbone > 0.9 && ratioWidthToLength < 1.05) {
+    return "Oval";
+  } else if (ratioForeheadToCheekbone > 0.8 && ratioForeheadToCheekbone < 1.25) {
+    return "Square";
+  } else if (ratioForeheadToCheekbone > 0.8 && ratioForeheadToCheekbone < 1.25 && ratioWidthToLength < 1.05) {
+    return "Heart";
+  } else if (ratioForeheadToCheekbone > 0.999 && ratioJawToCheekbone > 0.999 && ratioWidthToLength > 0.85) {
+    return "Diamond";
+  } else {
+    return "Undefined";
+  }
+}
+
+// Helper function to calculate distance between two points
+function calculatePointDistance(pointA, pointB) {
+  return Math.sqrt(Math.pow(pointA.x - pointB.x, 2) + Math.pow(pointA.y - pointB.y, 2));
+}
 // helper function to draw detected faces
 function faces(name, title, id, data) {
   // create canvas to draw on
@@ -102,6 +131,16 @@ async function image(url) {
     // load image
     img.src = url;
   });
+}
+
+async function setupFaceAPI() {
+  await faceapi.nets.ssdMobilenetv1.load(modelPath);
+  await faceapi.nets.ageGenderNet.load(modelPath);
+  await faceapi.nets.faceLandmark68Net.load(modelPath);
+  await faceapi.nets.faceRecognitionNet.load(modelPath);
+  await faceapi.nets.faceExpressionNet.load(modelPath);
+  optionsSSDMobileNet = new faceapi.SsdMobilenetv1Options({ minConfidence: minScore, maxResults });
+  log(`Models loaded: ${str(faceapi.tf.engine().state.numTensors)} tensors`);
 }
 
 async function main() {

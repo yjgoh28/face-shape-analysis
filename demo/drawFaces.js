@@ -25,13 +25,17 @@ export function setCurrentFilter(filterName) {
   currentFilter = filterName;
 }
 
+export function getCurrentFilter() {
+  return currentFilter;
+}
 
 
 export function drawFilterOnFace() {
   const { ctxvalue, personvalue } = getValues();
   
-  let img = currentFilter;
-  switch (img) {
+  let img;
+  const currentFilter = getCurrentFilter();
+  switch (currentFilter) {
     case 'aviator':
       img = filterImages.aviator;
       break;
@@ -67,8 +71,8 @@ export function drawFilterOnFace() {
   // Adjust filter size based on the filter type and eye distance
   switch (currentFilter) {
     case 'rectangle':
-      filterWidth = eyeDistance * 2.5;
-      filterHeight = filterWidth * 0.4;
+      filterWidth = eyeDistance * 2;
+      filterHeight = filterWidth * 0.6;
       break;
     case 'aviator':
       filterWidth = eyeDistance * 2;
@@ -79,8 +83,12 @@ export function drawFilterOnFace() {
       filterHeight = filterWidth * 0.45;
       break;
     case 'circle':
-      filterWidth = eyeDistance * 1.7;
-      filterHeight = filterWidth * 0.75;
+      filterWidth = eyeDistance * 1.5;
+      filterHeight = filterWidth * 0.65;
+      break;
+    case 'oval':
+      filterWidth = eyeDistance * 1.5;
+      filterHeight = filterWidth * 1.5;
       break;
     default:
       filterWidth = eyeDistance * 1.5;
@@ -89,7 +97,7 @@ export function drawFilterOnFace() {
   
   // Position the filter centered between the eyes
   const filterX = leftEye.x - (filterWidth - eyeDistance) / 2;
-  const filterY = leftEye.y - filterHeight / 2; // Adjust this value to move the filter up or down
+  const filterY = leftEye.y - filterHeight / 1.95; // Adjust this value to move the filter up or down
 
   // Draw the image with calculated dimensions
   ctxvalue.drawImage(img, filterX, filterY, filterWidth, filterHeight);
@@ -114,6 +122,8 @@ export function drawFaces(canvas, data, fps, shapes, recommendation) {
     ctx.fillStyle = 'deepskyblue';
     ctx.globalAlpha = 0.6;
     ctx.beginPath();
+
+    // draw the detection box around face
     // ctx.rect(person.detection.box.x, person.detection.box.y, person.detection.box.width, person.detection.box.height);
     ctx.stroke();
     ctx.globalAlpha = 1;
@@ -134,8 +144,8 @@ export function drawFaces(canvas, data, fps, shapes, recommendation) {
     ctx.fillStyle = 'lightblue';
     const pointSize = 2;
 
-    const testvalue = 17;
-    const testvalue2 = 36;
+    // const testvalue = 8;
+    // const testvalue2 = 57;
     for (let i = 0; i < person.landmarks.positions.length; i++) {
     // for (let i = 35; i < 37; i++) {
     
@@ -146,8 +156,6 @@ export function drawFaces(canvas, data, fps, shapes, recommendation) {
       // ctx.arc(person.landmarks.positions[testvalue2].x, person.landmarks.positions[testvalue2].y, pointSize, 0, 2 * Math.PI);
       ctx.fill();
     }
-
-    log(`Number of landmark positions: ${person.landmarks.positions.length}`);
 
     
     
