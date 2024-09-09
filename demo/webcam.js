@@ -112,7 +112,7 @@ function displayFaceDetail(detections) {
 
   detections.forEach(detection => {
     const landmarks = detection.landmarks;
-    let foreheadWidth = calculatePointDistance(landmarks.positions[0], landmarks.positions[16]);
+    let foreheadWidth = calculatePointDistance(landmarks.positions[0], landmarks.positions[17]);
     let cheekboneWidth = calculatePointDistance(landmarks.positions[4], landmarks.positions[12]);
     let jawWidth = calculatePointDistance(landmarks.positions[2], landmarks.positions[14]);
     let faceLength = calculatePointDistance(landmarks.positions[27], landmarks.positions[8]);

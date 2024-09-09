@@ -144,10 +144,10 @@ export function drawFaces(canvas, data, fps, shapes, recommendation) {
     ctx.fillStyle = 'lightblue';
     const pointSize = 2;
 
-    // const testvalue = 8;
-    // const testvalue2 = 57;
+    // const testvalue = 2;
+    // const testvalue2 = 14;
     for (let i = 0; i < person.landmarks.positions.length; i++) {
-    // for (let i = 35; i < 37; i++) {
+    // for (let i = testvalue; i < testvalue2; i++) {
     
       ctx.beginPath();
       ctx.arc(person.landmarks.positions[i].x, person.landmarks.positions[i].y, pointSize, 0, 2 * Math.PI);
