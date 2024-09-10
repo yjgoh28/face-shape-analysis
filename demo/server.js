@@ -3,13 +3,29 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
 
+// Add this near the top of your file, after other imports
+const mime = require('mime-types');
+
+// Add this middleware before your routes
+app.use((req, res, next) => {
+  if (req.url.endsWith('.js')) {
+    res.type(mime.lookup('js'));
+  }
+  next();
+});
+
 // Middleware
 app.use(express.json());
 app.use(cors());
+
+// Serve static files from the current directory and its parent
+app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, '..')));
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI)
@@ -67,6 +83,14 @@ app.post('/api/login', async (req, res) => {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
+});
+
+// Catch-all route to serve the frontend for any unmatched routes
+app.get('*', (req, res) => {
+  if (!req.accepts('html')) {
+    return res.sendStatus(404);
+  }
+  res.sendFile(path.join(__dirname, 'auth.html'));
 });
 
 const PORT = process.env.PORT || 5001;  // Changed to 5001

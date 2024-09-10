@@ -76,7 +76,7 @@ function toggleForms() {
     registerForm.style.display = registerForm.style.display === 'none' ? 'block' : 'none';
 }
 
-function logout() {
+export function logout() {
     localStorage.removeItem('token');
     window.location.href = 'auth.html';
 }

@@ -103,6 +103,7 @@
     "jsonwebtoken": "^9.0.2",
     "lodash.camelcase": "^4.3.0",
     "loose-envify": "^1.4.0",
+    "mime-types": "^2.1.35",
     "mongoose": "^8.6.1",
     "nanoid": "^3.3.7",
     "next": "^14.2.9",
