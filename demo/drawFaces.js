@@ -163,7 +163,7 @@ export function drawFaces(canvas, data, fps, shapes, recommendation) {
   // draw title
   ctx.font = 'normal 20px "Segoe UI"';
   ctx.fillStyle = 'white';
-  ctx.fillText(`FPS: ${fps}`, 10, 25);
+  // ctx.fillText(`FPS: ${fps}`, 10, 25);
 
   for (let i = 0; i < data.length; i++) {
     const person = data[i];
