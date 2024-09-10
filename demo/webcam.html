@@ -156,6 +156,31 @@
             border: none;
             border-radius: 5px;
         }
+        
+        #shopSpinnerContainer {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .spinner {
+            display: none;
+            width: 30px;
+            height: 30px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #e74c3c;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body style="font-family: monospace; background: black; color: white; font-size: 16px; line-height: 22px; margin: 0; overflow-y: auto;">
@@ -167,7 +192,13 @@
     <!-- Add this line for the brightness log -->
     <div id="brightnessLog" style="position: fixed; top: 0; right: 0; padding: 0.5rem; background: yellow; color: black;"></div>
 
-    <button id="findShopBtn">Find Nearest Spectacle Shop</button>
+    <button id="findShopBtn">
+        Find Nearest Spectacle Shop
+        <div class="spinner" id="shopSpinner"></div>
+    </button>
+    <div id="shopSpinnerContainer">
+        <div class="spinner" id="shopSpinner"></div>
+    </div>
 
     <div class="filter-buttons">
         <button id="aviatorBtn">Aviator</button>
@@ -183,7 +214,6 @@
         <div id="shop-list"></div>
     </div>
 
-    <!-- Add this just before the closing </body> tag -->
     <div id="color-slider" style="position: fixed; left: 20px; top: 50%; transform: translateY(-50%); z-index: 1000;">
         <input type="range" id="hue" min="0" max="360" value="0" class="slider">
     </div>

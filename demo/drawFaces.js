@@ -202,7 +202,7 @@ export function drawFaces(canvas, data, fps, shapes, recommendation) {
     // for (let i = testvalue; i < testvalue2; i++) {
     
       ctx.beginPath();
-      ctx.arc(person.landmarks.positions[i].x, person.landmarks.positions[i].y, pointSize, 0, 2 * Math.PI);
+      // ctx.arc(person.landmarks.positions[i].x, person.landmarks.positions[i].y, pointSize, 0, 2 * Math.PI);
       
       // ctx.arc(person.landmarks.positions[testvalue].x, person.landmarks.positions[testvalue].y, pointSize, 0, 2 * Math.PI);
       // ctx.arc(person.landmarks.positions[testvalue2].x, person.landmarks.positions[testvalue2].y, pointSize, 0, 2 * Math.PI);

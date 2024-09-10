@@ -1,4 +1,7 @@
 function findNearestSpectacleShops() {
+  const spinner = document.getElementById('shopSpinner');
+  spinner.style.display = 'block';
+
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -15,16 +18,21 @@ function findNearestSpectacleShops() {
         };
 
         const service = new google.maps.places.PlacesService(document.createElement('div'));
-        service.nearbySearch(request, displayResults);
+        service.nearbySearch(request, (results, status) => {
+          displayResults(results, status);
+          spinner.style.display = 'none';
+        });
       },
       () => {
         console.error('Error: The Geolocation service failed.');
         alert('Unable to retrieve your location. Please try again.');
+        spinner.style.display = 'none';
       }
     );
   } else {
     console.error('Error: Your browser doesn\'t support geolocation.');
     alert('Your browser doesn\'t support geolocation. Please use a modern browser.');
+    spinner.style.display = 'none';
   }
 }
 
