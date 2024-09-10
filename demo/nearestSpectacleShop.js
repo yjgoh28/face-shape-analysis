@@ -12,7 +12,7 @@ function findNearestSpectacleShops() {
         
         const request = {
           location: userLocation,
-          radius: '5000',
+          radius: '2000',
           type: ['optician'],
           keyword: 'spectacles shop'
         };

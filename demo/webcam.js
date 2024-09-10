@@ -119,7 +119,7 @@ function displayFaceDetail(detections) {
     let faceLength = calculatePointDistance(landmarks.positions[27], landmarks.positions[8]);
     let chinLength = calculatePointDistance(landmarks.positions[8], landmarks.positions[57]);
 
-    let ratioWidthToLength = cheekboneWidth / faceLength;
+    let ratioCheekboneWidthToLength = cheekboneWidth / faceLength;
     let ratioJawToCheekbone = jawWidth / cheekboneWidth;
     let ratioForeheadToCheekbone = foreheadWidth / cheekboneWidth;
     let ratioChinToJaw = chinLength / jawWidth;
@@ -130,22 +130,20 @@ function displayFaceDetail(detections) {
     // Square face
 
     // Oval face
-    if (ratioForeheadToCheekbone >0.9 && ratioWidthToLength <1.05) {
+    if (ratioForeheadToCheekbone >0) {
       faceShape = "Oval";
     }
     else if (ratioForeheadToCheekbone > 0.8 && ratioForeheadToCheekbone < 1.25) {
       faceShape = "Square";
     }
-    else if (ratioForeheadToCheekbone > 0.8 && ratioForeheadToCheekbone < 1.25 && ratioWidthToLength < 1.05) {
+    else if (ratioForeheadToCheekbone > 0.8 && ratioForeheadToCheekbone < 1.25 && ratioCheekboneWidthToLength < 1.05) {
       faceShape = "Heart";
     }
     // Diamond face
-    else if (ratioForeheadToCheekbone >0.999 && ratioJawToCheekbone > 0.999 && ratioWidthToLength >0.85 ) {
+    else if (ratioForeheadToCheekbone >0.999 && ratioJawToCheekbone > 0.999 && ratioCheekboneWidthToLength >0.85 ) {
       faceShape = "Diamond";
     }
 
-
-    // Heart face (inverted triangle)
     else {
       faceShape = "Undefined";
     }
