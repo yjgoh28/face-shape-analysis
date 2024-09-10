@@ -9,6 +9,7 @@ import * as faceapi from '../dist/face-api.esm.js'; // use when in dev mode
 import { drawFaces, drawFilterOnFace , setCurrentFilter } from './drawFaces.js';
 import { preloadFilterImages, filterImages } from './filterUtils.js';
 import { findNearestSpectacleShops } from './nearestSpectacleShop.js';
+import { initColorSlider } from './colorSlider.js';
 
 /**
  * Estimates the distance of the face from the camera based on the size of the bounding box.
@@ -285,6 +286,9 @@ async function setupFaceAPI() {
 // Main function to initialize the system
 async function main() {
   log('FaceAPI WebCam Test');
+
+  // Initialize color slider
+  initColorSlider();
 
   // Set up button listeners
   document.getElementById('aviatorBtn').addEventListener('click', () => {

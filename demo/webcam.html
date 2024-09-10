@@ -19,12 +19,54 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 20;
+            display: flex;
+            gap: 10px;
         }
         .filter-buttons button {
-            margin: 0 5px;
             padding: 10px 15px;
             font-size: 16px;
             cursor: pointer;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .filter-buttons button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .filter-buttons button:active {
+            background-color: #2471a3;
+            transform: translateY(0);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        #findShopBtn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            padding: 12px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        #findShopBtn:hover {
+            background-color: #c0392b;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        #findShopBtn:active {
+            background-color: #a93226;
+            transform: translateY(0);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
         #map {
             height: 300px;
@@ -71,6 +113,49 @@
             display: none;
             z-index: 1000;
         }
+        
+        .slider {
+            -webkit-appearance: none;
+            width: 200px;
+            height: 15px;
+            border-radius: 5px;
+            background: linear-gradient(to right, 
+                hsl(0, 100%, 50%), hsl(60, 100%, 50%), 
+                hsl(120, 100%, 50%), hsl(180, 100%, 50%), 
+                hsl(240, 100%, 50%), hsl(300, 100%, 50%), 
+                hsl(360, 100%, 50%));
+            outline: none;
+            opacity: 0.7;
+            -webkit-transition: .2s;
+            transition: opacity .2s;
+            transform: rotate(-90deg);
+            margin: 100px 0;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            border: 2px solid #000000;
+        }
+        
+        #findShopBtn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            padding: 10px 15px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body style="font-family: monospace; background: black; color: white; font-size: 16px; line-height: 22px; margin: 0; overflow-y: auto;">
@@ -82,19 +167,25 @@
     <!-- Add this line for the brightness log -->
     <div id="brightnessLog" style="position: fixed; top: 0; right: 0; padding: 0.5rem; background: yellow; color: black;"></div>
 
+    <button id="findShopBtn">Find Nearest Spectacle Shop</button>
+
     <div class="filter-buttons">
         <button id="aviatorBtn">Aviator</button>
         <button id="catEyeBtn">Cat Eye</button>
         <button id="circleBtn">Circle</button>
         <button id="ovalBtn">Oval</button>
         <button id="rectangleBtn">Rectangle</button>
-        <button id="findShopBtn">Find Nearest Spectacle Shop</button>
     </div>
 
 
     <div id="sidebar">
         <h2>Nearby Spectacle Shops</h2>
         <div id="shop-list"></div>
+    </div>
+
+    <!-- Add this just before the closing </body> tag -->
+    <div id="color-slider" style="position: fixed; left: 20px; top: 50%; transform: translateY(-50%); z-index: 1000;">
+        <input type="range" id="hue" min="0" max="360" value="0" class="slider">
     </div>
 </body>
 </html>

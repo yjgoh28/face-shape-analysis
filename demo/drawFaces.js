@@ -1,8 +1,7 @@
 import { filterImages } from './filterUtils.js';
 import { TopLeftEyePosition } from './webcam.js';
 import { log } from './webcam.js';
-
-
+import { getFilterHue } from './colorSlider.js';
 
 let currentFilter = 'circle';
 let ctxvalue = null;
@@ -10,7 +9,6 @@ let personvalue = null;
 let previousShape = null;
 
 const toplefteyebrowvalue = 1;
-
 
 function updateValues(newCtxValue, newPersonValue) {
   ctxvalue = newCtxValue;
@@ -28,7 +26,6 @@ export function setCurrentFilter(filterName) {
 export function getCurrentFilter() {
   return currentFilter;
 }
-
 
 export function drawFilterOnFace() {
   const { ctxvalue, personvalue } = getValues();
@@ -99,10 +96,65 @@ export function drawFilterOnFace() {
   const filterX = leftEye.x - (filterWidth - eyeDistance) / 2;
   const filterY = leftEye.y - filterHeight / 1.95; // Adjust this value to move the filter up or down
 
-  // Draw the image with calculated dimensions
-  ctxvalue.drawImage(img, filterX, filterY, filterWidth, filterHeight);
+  // Create a temporary canvas to apply the color overlay
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = filterWidth;
+  tempCanvas.height = filterHeight;
+  const tempCtx = tempCanvas.getContext('2d');
+
+  // Draw the original filter image
+  tempCtx.drawImage(img, 0, 0, filterWidth, filterHeight);
+
+  // Get the image data
+  const imageData = tempCtx.getImageData(0, 0, filterWidth, filterHeight);
+  const data = imageData.data;
+
+  // Apply hue rotation only to non-transparent pixels
+  const hue = getFilterHue();
+  for (let i = 0; i < data.length; i += 4) {
+    // Check if the pixel is not transparent
+    if (data[i + 3] > 0) {
+      // Adjust lightness based on hue to get black when hue is 0
+      const lightness = hue === 0 ? 0 : 0.5;
+      const [r, g, b] = hslToRgb(hue / 360, 1, lightness);
+      data[i] = r;
+      data[i + 1] = g;
+      data[i + 2] = b;
+    }
+  }
+
+  // Put the modified image data back
+  tempCtx.putImageData(imageData, 0, 0);
+
+  // Draw the colored filter onto the main canvas
+  ctxvalue.drawImage(tempCanvas, filterX, filterY, filterWidth, filterHeight);
 }
 
+// Helper function to convert HSL to RGB
+function hslToRgb(h, s, l) {
+  let r, g, b;
+
+  if (s === 0 || l === 0) {
+    r = g = b = l; // achromatic or black
+  } else {
+    const hue2rgb = (p, q, t) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1/6) return p + (q - p) * 6 * t;
+      if (t < 1/2) return q;
+      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+      return p;
+    };
+
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    r = hue2rgb(p, q, h + 1/3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1/3);
+  }
+
+  return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+}
 
 export function drawFaces(canvas, data, fps, shapes, recommendation) {
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
