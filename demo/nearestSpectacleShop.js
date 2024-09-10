@@ -43,30 +43,53 @@ function displayResults(results, status) {
 
   if (status === google.maps.places.PlacesServiceStatus.OK && results) {
     results.forEach((place) => {
-      const shopDiv = document.createElement('div');
-      shopDiv.style.marginBottom = '20px';
-      shopDiv.style.borderBottom = '1px solid #ccc';
-      shopDiv.style.paddingBottom = '10px';
+      const service = new google.maps.places.PlacesService(document.createElement('div'));
+      service.getDetails(
+        {
+          placeId: place.place_id,
+          fields: ['name', 'formatted_address', 'rating', 'formatted_phone_number', 'photos']
+        },
+        (placeDetails, detailStatus) => {
+          if (detailStatus === google.maps.places.PlacesServiceStatus.OK) {
+            const shopDiv = document.createElement('div');
+            shopDiv.className = 'shop-item';
 
-      const name = document.createElement('h3');
-      name.textContent = place.name;
-      shopDiv.appendChild(name);
+            const name = document.createElement('h3');
+            name.textContent = placeDetails.name;
+            shopDiv.appendChild(name);
 
-      const address = document.createElement('p');
-      address.textContent = place.vicinity;
-      shopDiv.appendChild(address);
+            const address = document.createElement('p');
+            address.textContent = placeDetails.formatted_address;
+            shopDiv.appendChild(address);
 
-      const rating = document.createElement('p');
-      rating.textContent = `Rating: ${place.rating ? place.rating + '/5' : 'N/A'}`;
-      shopDiv.appendChild(rating);
+            if (placeDetails.formatted_phone_number) {
+              const phone = document.createElement('p');
+              phone.textContent = `Phone: ${placeDetails.formatted_phone_number}`;
+              shopDiv.appendChild(phone);
+            }
 
-      const link = document.createElement('a');
-      link.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}&query_place_id=${place.place_id}`;
-      link.textContent = 'View on Google Maps';
-      link.target = '_blank';
-      shopDiv.appendChild(link);
+            const rating = document.createElement('p');
+            rating.textContent = `Rating: ${placeDetails.rating ? placeDetails.rating + '/5' : 'N/A'}`;
+            shopDiv.appendChild(rating);
 
-      shopList.appendChild(shopDiv);
+            if (placeDetails.photos && placeDetails.photos.length > 0) {
+              const photo = document.createElement('img');
+              photo.src = placeDetails.photos[0].getUrl({maxWidth: 300, maxHeight: 200});
+              photo.style.maxWidth = '100%';
+              photo.style.height = 'auto';
+              shopDiv.appendChild(photo);
+            }
+
+            const link = document.createElement('a');
+            link.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(placeDetails.name)}&query_place_id=${placeDetails.place_id}`;
+            link.textContent = 'View on Google Maps';
+            link.target = '_blank';
+            shopDiv.appendChild(link);
+
+            shopList.appendChild(shopDiv);
+          }
+        }
+      );
     });
 
     sidebar.style.display = 'block';
