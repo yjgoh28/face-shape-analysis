@@ -10,6 +10,7 @@ import { drawFaces, drawFilterOnFace , setCurrentFilter } from './drawFaces.js';
 import { preloadFilterImages, filterImages } from './filterUtils.js';
 import { findNearestSpectacleShops } from './nearestSpectacleShop.js';
 import { initColorSlider } from './colorSlider.js';
+import { logout } from './auth.js';
 
 /**
  * Estimates the distance of the face from the camera based on the size of the bounding box.
@@ -281,6 +282,18 @@ async function setupFaceAPI() {
   log(`Models loaded: ${str(faceapi.tf.engine().state.numTensors)} tensors`);
 }
 
+// Add this function to your main() function or wherever you set up your UI
+function setupLogoutButton() {
+    const logoutBtn = document.createElement('button');
+    logoutBtn.textContent = 'Logout';
+    logoutBtn.style.position = 'fixed';
+    logoutBtn.style.top = '20px';
+    logoutBtn.style.left = '20px';
+    logoutBtn.style.zIndex = '1000';
+    logoutBtn.addEventListener('click', logout);
+    document.body.appendChild(logoutBtn);
+}
+
 // Main function to initialize the system
 async function main() {
   log('FaceAPI WebCam Test');
@@ -327,6 +340,7 @@ async function main() {
   await setupFaceAPI();
   await preloadFilterImages(); // Preload filter images
   await setupCamera();
+  setupLogoutButton();
 }
 
 // Start processing as soon as page is loaded

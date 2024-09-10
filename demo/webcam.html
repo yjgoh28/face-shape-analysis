@@ -9,6 +9,11 @@
     <meta name="description" content="FaceAPI: AI-powered Face Detection, Description & Recognition for Browser and NodeJS using Tensorflow/JS; Author: Vladimir Mandic <https://github.com/vladmandic>">
     <meta name="msapplication-tooltip" content="FaceAPI: AI-powered Face Detection, Description & Recognition for Browser and NodeJS using Tensorflow/JS; Author: Vladimir Mandic <https://github.com/vladmandic>">
     <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon">
+    <script>
+        if (!localStorage.getItem('token')) {
+            window.location.href = 'auth.html';
+        }
+    </script>
     <script src="./webcam.js" type="module"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBWdvclL5pjBEhSCDyidzdQwA_mwH9Rn0o&libraries=places"></script>
     <script src="./nearestSpectacleShop.js" type="module"></script>
@@ -201,13 +206,15 @@
             top: 20px;
             right: 20px;
             z-index: 1000;
-            padding: 10px 15px;
+            padding: 12px 20px;
             font-size: 16px;
             cursor: pointer;
-            background-color: #4CAF50;
+            background-color: #e74c3c;
             color: white;
             border: none;
             border-radius: 5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
         
         #shopSpinnerContainer {
