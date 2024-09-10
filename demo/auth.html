@@ -49,32 +49,32 @@
             text-align: center;
         }
     </style>
+    <script src="./auth.js" type="module"></script>
 </head>
 <body>
     <div class="auth-container">
         <div id="loginForm">
             <h2>Login</h2>
-            <form id="login">
+            <form id="login" onsubmit="handleLogin(event)">
                 <input type="email" id="loginEmail" placeholder="Email" required>
                 <input type="password" id="loginPassword" placeholder="Password" required>
                 <button type="submit">Login</button>
             </form>
             <div class="toggle-form">
-                <a href="#" id="showRegister">Don't have an account? Register</a>
+                <a href="#" onclick="toggleForms()">Don't have an account? Register</a>
             </div>
         </div>
         <div id="registerForm" style="display: none;">
             <h2>Register</h2>
-            <form id="register">
+            <form id="register" onsubmit="handleRegister(event)">
                 <input type="email" id="registerEmail" placeholder="Email" required>
                 <input type="password" id="registerPassword" placeholder="Password" required>
                 <button type="submit">Register</button>
             </form>
             <div class="toggle-form">
-                <a href="#" id="showLogin">Already have an account? Login</a>
+                <a href="#" onclick="toggleForms()">Already have an account? Login</a>
             </div>
         </div>
     </div>
-    <script src="auth.js"></script>
 </body>
 </html>

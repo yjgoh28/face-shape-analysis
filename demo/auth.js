@@ -41,6 +41,9 @@ async function handleLogin(e) {
     }
 }
 
+// Make handleLogin available globally
+window.handleLogin = handleLogin;
+
 async function handleRegister(e) {
     e.preventDefault();
     const email = document.getElementById('registerEmail').value;
@@ -69,6 +72,9 @@ async function handleRegister(e) {
     }
 }
 
+// Make handleRegister available globally
+window.handleRegister = handleRegister;
+
 function toggleForms() {
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
@@ -76,7 +82,13 @@ function toggleForms() {
     registerForm.style.display = registerForm.style.display === 'none' ? 'block' : 'none';
 }
 
+// Make toggleForms available globally
+window.toggleForms = toggleForms;
+
 export function logout() {
     localStorage.removeItem('token');
     window.location.href = 'auth.html';
 }
+
+// Make logout available globally
+window.logout = logout;
