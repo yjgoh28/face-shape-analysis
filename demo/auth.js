@@ -31,6 +31,7 @@ async function handleLogin(e) {
 
         if (response.ok) {
             localStorage.setItem('token', data.token);
+            localStorage.setItem('role', data.role);
             localStorage.setItem('hasCustomFilter', data.hasCustomFilter);
             localStorage.setItem('customFilterPath', data.customFilterPath || '');
             window.location.href = 'webcam.html';
@@ -52,6 +53,8 @@ async function handleRegister(e) {
     e.preventDefault();
     const email = document.getElementById('registerEmail').value;
     const password = document.getElementById('registerPassword').value;
+    const isAdmin = document.getElementById('registerAsAdmin').checked;
+    const adminSecret = isAdmin ? document.getElementById('adminSecret').value : null;
 
     try {
         const response = await fetch('http://localhost:5001/api/register', {
@@ -59,13 +62,19 @@ async function handleRegister(e) {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify({ 
+                email, 
+                password, 
+                role: isAdmin ? 'admin' : 'user',
+                adminSecret
+            }),
         });
 
         const data = await response.json();
 
         if (response.ok) {
             localStorage.setItem('token', data.token);
+            localStorage.setItem('role', data.role);
             window.location.href = 'webcam.html';
         } else {
             throw new Error(data.message || 'Registration failed');
@@ -76,6 +85,9 @@ async function handleRegister(e) {
         // Clear the form
         document.getElementById('registerEmail').value = '';
         document.getElementById('registerPassword').value = '';
+        if (document.getElementById('adminSecret')) {
+            document.getElementById('adminSecret').value = '';
+        }
     }
 }
 

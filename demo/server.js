@@ -34,20 +34,21 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('Could not connect to MongoDB', err));
 
-// Update the User model to include customFilter
+// Update the User model to include customFilter and role
 const User = mongoose.model('User', new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  customFilter: { type: String }
+  customFilter: { type: String },
+  role: { type: String, enum: ['user', 'admin'], default: 'user' }
 }));
 
 // Set up multer for file uploads
 const upload = multer({ dest: 'uploads/' });
 
-// Routes
+// Update the registration route
 app.post('/api/register', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role, adminSecret } = req.body;
     
     // Check if user already exists
     let user = await User.findOne({ email });
@@ -59,20 +60,34 @@ app.post('/api/register', async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    // Check if trying to create an admin user
+    let userRole = 'user';
+    if (role === 'admin') {
+      // Verify admin secret
+      if (adminSecret !== process.env.ADMIN_SECRET) {
+        return res.status(403).json({ message: 'Invalid admin secret' });
+      }
+      userRole = 'admin';
+    }
+
     // Create new user
-    user = new User({ email, password: hashedPassword });
+    user = new User({ 
+      email, 
+      password: hashedPassword, 
+      role: userRole
+    });
     await user.save();
 
     // Create and send token
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
-    res.status(201).json({ token });
+    const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET);
+    res.status(201).json({ token, role: user.role });
   } catch (error) {
     console.error('Server error during registration:', error);
     res.status(500).json({ message: 'Server error during registration' });
   }
 });
 
-// Update the login route to include customFilter information
+// Update the login route
 app.post('/api/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -86,9 +101,10 @@ app.post('/api/login', async (req, res) => {
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
     // Create and send token
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
+    const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET);
     res.json({ 
       token,
+      role: user.role,
       hasCustomFilter: !!user.customFilter,
       customFilterPath: user.customFilter
     });
@@ -141,3 +157,21 @@ app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 // Add this line to serve files from the 'uploads' directory
 app.use('/uploads', express.static('uploads'));
+
+// Update the /api/users route
+app.get('/api/users', async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    if (decoded.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied. Admin only.' });
+    }
+
+    const users = await User.find({}, '-password');
+    res.json(users);
+  } catch (error) {
+    console.error('Error in /api/users route:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});

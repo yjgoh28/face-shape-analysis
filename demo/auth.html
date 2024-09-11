@@ -103,6 +103,11 @@
             <form id="register" onsubmit="handleRegister(event)">
                 <input type="email" id="registerEmail" placeholder="Email" required>
                 <input type="password" id="registerPassword" placeholder="Password" required>
+                <div>
+                    <input type="checkbox" id="registerAsAdmin" onchange="toggleAdminSecret()">
+                    <label for="registerAsAdmin">Register as Admin</label>
+                </div>
+                <input type="password" id="adminSecret" placeholder="Admin Secret" style="display: none;">
                 <button type="submit">Register</button>
             </form>
             <div class="toggle-form">
@@ -116,5 +121,12 @@
             <p id="errorMessage"></p>
         </div>
     </div>
+    <script>
+    function toggleAdminSecret() {
+        const adminSecretField = document.getElementById('adminSecret');
+        const registerAsAdmin = document.getElementById('registerAsAdmin');
+        adminSecretField.style.display = registerAsAdmin.checked ? 'block' : 'none';
+    }
+    </script>
 </body>
 </html>
