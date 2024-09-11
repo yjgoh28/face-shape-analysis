@@ -11,6 +11,7 @@ import { preloadFilterImages, filterImages } from './filterUtils.js';
 import { findNearestSpectacleShops } from './nearestSpectacleShop.js';
 import { initColorSlider } from './colorSlider.js';
 import { logout } from './auth.js';
+import { uploadImage, getCustomFilter, loadCustomFilterOnStartup } from './imageUpload.js';
 
 /**
  * Estimates the distance of the face from the camera based on the size of the bounding box.
@@ -159,60 +160,58 @@ async function detectVideo(video, canvas) {
   if (!video || video.paused) return false;
   const t0 = performance.now();
 
-  // 1. Face Detection and Analysis
-  faceapi
-    .detectAllFaces(video, optionsSSDMobileNet)
-    .withFaceLandmarks()
-    .withFaceExpressions()
-    .withAgeAndGender()
-    .then((result) => {
-      const fps = 1000 / (performance.now() - t0);
-      const faceShapes = displayFaceDetail(result);
-      let recommendations = [];
+  try {
+    const result = await faceapi
+      .detectAllFaces(video, optionsSSDMobileNet)
+      .withFaceLandmarks()
+      .withFaceExpressions()
+      .withAgeAndGender();
 
-      faceShapes.forEach(faceShape => {
-        let recommendation;
-        switch(faceShape) {
-          case "Oval":
-            recommendation = "Rectangle, Cat-eye, Aviator";
-            break;
-          case "Round":
-            recommendation = "Rectangle";
-            break;
-          case "Square":
-            recommendation = "Circle, Oval, Aviator";
-            break;
-          case "Diamond":
-            recommendation = "Oval, Cat-eye";
-            break;
-          case "Rectangular":
-            recommendation = "Circle, Oval";
-            break;
-          case "Triangle":
-            recommendation = "Cat-eye, Aviator";
-            break;
-          case "Heart":
-            recommendation = "Circle, Oval";
-            break;
-          default:
-            recommendation = "Unable to determine suitable frames";
-        }
-        recommendations.push(recommendation);
-      });
+    const fps = 1000 / (performance.now() - t0);
+    const faceShapes = displayFaceDetail(result);
+    let recommendations = [];
 
-      drawFaces(canvas, result, fps.toLocaleString(), faceShapes, recommendations);
-      displayEyeDistance(result);
-      displayDistance(result);
-
-      requestAnimationFrame(() => detectVideo(video, canvas));
-      return true;
-    })
-    .catch((err) => {
-      log(`Detect Error: ${str(err)}`);
-      return false;
+    faceShapes.forEach(faceShape => {
+      let recommendation;
+      switch(faceShape) {
+        case "Oval":
+          recommendation = "Rectangle, Cat-eye, Aviator";
+          break;
+        case "Round":
+          recommendation = "Rectangle";
+          break;
+        case "Square":
+          recommendation = "Circle, Oval, Aviator";
+          break;
+        case "Diamond":
+          recommendation = "Oval, Cat-eye";
+          break;
+        case "Rectangular":
+          recommendation = "Circle, Oval";
+          break;
+        case "Triangle":
+          recommendation = "Cat-eye, Aviator";
+          break;
+        case "Heart":
+          recommendation = "Circle, Oval";
+          break;
+        default:
+          recommendation = "Unable to determine suitable frames";
+      }
+      recommendations.push(recommendation);
     });
 
-  return false;
+    drawFaces(canvas, result, fps.toLocaleString(), faceShapes, recommendations);
+    displayEyeDistance(result);
+    displayDistance(result);
+
+    requestAnimationFrame(() => detectVideo(video, canvas));
+    return true;
+  } catch (err) {
+    console.error(`Detect Error: ${err}`);
+    requestAnimationFrame(() => detectVideo(video, canvas));
+    return false;
+  }
 }
 
 // Initialize the camera and start video feed
@@ -298,6 +297,9 @@ function setupLogoutButton() {
 async function main() {
   log('FaceAPI WebCam Test');
 
+  // Load custom filter if it exists
+  await loadCustomFilterOnStartup();
+
   // Initialize color slider
   initColorSlider();
 
@@ -325,6 +327,46 @@ async function main() {
   document.getElementById('findShopBtn').addEventListener('click', () => {
     console.log('Finding nearest spectacle shops...');
     findNearestSpectacleShops();
+  });
+
+  document.getElementById('uploadBtn').addEventListener('click', () => {
+    document.getElementById('fileInput').click();
+  });
+
+  document.getElementById('fileInput').addEventListener('change', async (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      try {
+        await uploadImage(file);
+        document.getElementById('customFilterBtn').style.display = 'inline-block';
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        alert('Failed to upload image. Please try again.');
+      }
+    }
+  });
+
+  // Check if user has a custom filter and show the button if they do
+  const hasCustomFilter = localStorage.getItem('hasCustomFilter') === 'true';
+  const customFilterBtn = document.getElementById('customFilterBtn');
+  if (hasCustomFilter) {
+    customFilterBtn.style.display = 'inline-block';
+  }
+
+  customFilterBtn.addEventListener('click', () => {
+    console.log('Custom filter button clicked');
+    const customFilter = getCustomFilter();
+    console.log('Custom filter returned:', customFilter);
+    if (customFilter) {
+        console.log('Setting current filter to custom');
+        setCurrentFilter('custom');
+        console.log('Custom filter set');
+        // Force a redraw of the filter
+        requestAnimationFrame(() => drawFilterOnFace());
+    } else {
+        console.error('Custom filter not available');
+        alert('Custom filter is not ready. Please try uploading an image first.');
+    }
   });
 
   // Set backend to WebGL and initialize TensorFlow.js

@@ -7,10 +7,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const showRegisterLink = document.getElementById('showRegister');
     const showLoginLink = document.getElementById('showLogin');
 
-    loginForm.addEventListener('submit', handleLogin);
-    registerForm.addEventListener('submit', handleRegister);
-    showRegisterLink.addEventListener('click', toggleForms);
-    showLoginLink.addEventListener('click', toggleForms);
+    if (loginForm) loginForm.addEventListener('submit', handleLogin);
+    if (registerForm) registerForm.addEventListener('submit', handleRegister);
+    if (showRegisterLink) showRegisterLink.addEventListener('click', toggleForms);
+    if (showLoginLink) showLoginLink.addEventListener('click', toggleForms);
 });
 
 async function handleLogin(e) {
@@ -31,13 +31,17 @@ async function handleLogin(e) {
 
         if (response.ok) {
             localStorage.setItem('token', data.token);
+            localStorage.setItem('hasCustomFilter', data.hasCustomFilter);
+            localStorage.setItem('customFilterPath', data.customFilterPath || '');
             window.location.href = 'webcam.html';
         } else {
-            alert(data.message);
+            throw new Error(data.message || 'Login failed');
         }
     } catch (error) {
-        console.error('Error:', error);
-        alert('An error occurred. Please try again.');
+        console.error('Login error:', error);
+        showErrorModal(error.message);
+        // Clear the password field
+        document.getElementById('loginPassword').value = '';
     }
 }
 
@@ -64,11 +68,14 @@ async function handleRegister(e) {
             localStorage.setItem('token', data.token);
             window.location.href = 'webcam.html';
         } else {
-            alert(data.message);
+            throw new Error(data.message || 'Registration failed');
         }
     } catch (error) {
-        console.error('Error:', error);
-        alert('An error occurred. Please try again.');
+        console.error('Registration error:', error);
+        showErrorModal(error.message);
+        // Clear the form
+        document.getElementById('registerEmail').value = '';
+        document.getElementById('registerPassword').value = '';
     }
 }
 
@@ -92,3 +99,22 @@ export function logout() {
 
 // Make logout available globally
 window.logout = logout;
+
+function showErrorModal(message) {
+    const modal = document.getElementById('errorModal');
+    const errorMessage = document.getElementById('errorMessage');
+    const closeBtn = document.getElementsByClassName('close')[0];
+
+    errorMessage.textContent = message;
+    modal.style.display = 'block';
+
+    closeBtn.onclick = function() {
+        modal.style.display = 'none';
+    }
+
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    }
+}

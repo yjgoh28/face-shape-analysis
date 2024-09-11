@@ -4,6 +4,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const path = require('path');
+const multer = require('multer'); // Add this line
+const fs = require('fs'); // Add this line as well
 require('dotenv').config();
 
 const app = express();
@@ -32,11 +34,15 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('Could not connect to MongoDB', err));
 
-// User model
+// Update the User model to include customFilter
 const User = mongoose.model('User', new mongoose.Schema({
   email: { type: String, required: true, unique: true },
-  password: { type: String, required: true }
+  password: { type: String, required: true },
+  customFilter: { type: String }
 }));
+
+// Set up multer for file uploads
+const upload = multer({ dest: 'uploads/' });
 
 // Routes
 app.post('/api/register', async (req, res) => {
@@ -45,7 +51,9 @@ app.post('/api/register', async (req, res) => {
     
     // Check if user already exists
     let user = await User.findOne({ email });
-    if (user) return res.status(400).json({ message: 'User already exists' });
+    if (user) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
 
     // Hash password
     const salt = await bcrypt.genSalt(10);
@@ -57,13 +65,14 @@ app.post('/api/register', async (req, res) => {
 
     // Create and send token
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
-    res.json({ token });
+    res.status(201).json({ token });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Server error during registration:', error);
+    res.status(500).json({ message: 'Server error during registration' });
   }
 });
 
+// Update the login route to include customFilter information
 app.post('/api/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -78,7 +87,41 @@ app.post('/api/login', async (req, res) => {
 
     // Create and send token
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
-    res.json({ token });
+    res.json({ 
+      token,
+      hasCustomFilter: !!user.customFilter,
+      customFilterPath: user.customFilter
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// New route for image upload
+app.post('/api/upload-filter', upload.single('image'), async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    const oldPath = req.file.path;
+    const newPath = path.join('uploads', `${user._id}_${req.file.originalname}`);
+
+    fs.renameSync(oldPath, newPath);
+
+    user.customFilter = newPath;
+    await user.save();
+
+    res.json({ message: 'Filter uploaded successfully', imageUrl: newPath });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -95,3 +138,6 @@ app.get('*', (req, res) => {
 
 const PORT = process.env.PORT || 5001;  // Changed to 5001
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// Add this line to serve files from the 'uploads' directory
+app.use('/uploads', express.static('uploads'));
