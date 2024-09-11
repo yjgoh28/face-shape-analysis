@@ -32,7 +32,7 @@ export function getCurrentFilter() {
 }
 
 export function drawFilterOnFace() {
-  console.log('drawFilterOnFace called');
+  // console.log('drawFilterOnFace called');
   const { ctxvalue, personvalue } = getValues();
   
   if (!ctxvalue || !personvalue) {
@@ -42,7 +42,7 @@ export function drawFilterOnFace() {
 
   let img;
   const currentFilter = getCurrentFilter();
-  console.log('Current filter:', currentFilter);
+  // console.log('Current filter:', currentFilter);
   
   switch (currentFilter) {
     case 'aviator':
@@ -88,7 +88,7 @@ export function drawFilterOnFace() {
     return;
   }
 
-  console.log('Filter image dimensions:', img.width, 'x', img.height);
+  // console.log('Filter image dimensions:', img.width, 'x', img.height);
 
   // Rest of the function remains the same
   const { x, y, width, height } = personvalue.detection.box;

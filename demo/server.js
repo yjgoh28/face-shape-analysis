@@ -1,3 +1,11 @@
+require('dotenv').config();
+
+// Add this check after the dotenv config
+if (!process.env.JWT_SECRET) {
+  console.error('JWT_SECRET is not set in the environment variables');
+  process.exit(1);
+}
+
 const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
@@ -144,8 +152,51 @@ app.post('/api/upload-filter', upload.single('image'), async (req, res) => {
   }
 });
 
-// Catch-all route to serve the frontend for any unmatched routes
+// Update the /api/users route
+app.get('/api/users', async (req, res) => {
+  try {
+    console.log('Received request for /api/users');
+    const authHeader = req.headers.authorization;
+    console.log('Auth header:', authHeader);
+    if (!authHeader) {
+      console.log('No authorization header provided');
+      return res.status(401).json({ message: 'No authorization header provided' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    console.log('Token:', token);
+    if (!token) {
+      console.log('No token provided');
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+      console.log('Decoded token:', decoded);
+    } catch (err) {
+      console.log('Invalid token:', err.message);
+      return res.status(401).json({ message: 'Invalid token', error: err.message });
+    }
+
+    const users = await User.find({}, '-password');
+    console.log('Users fetched successfully:', users);
+    res.json(users);
+  } catch (error) {
+    console.error('Error in /api/users route:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Serve static files
+app.use(express.static(path.join(__dirname)));
+
+// Catch-all route (keep this at the end, but modify it)
 app.get('*', (req, res) => {
+  console.log('Catch-all route hit:', req.url);
+  if (req.url.startsWith('/api/')) {
+    return res.status(404).json({ message: 'API endpoint not found' });
+  }
   if (!req.accepts('html')) {
     return res.sendStatus(404);
   }
@@ -158,20 +209,8 @@ app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 // Add this line to serve files from the 'uploads' directory
 app.use('/uploads', express.static('uploads'));
 
-// Update the /api/users route
-app.get('/api/users', async (req, res) => {
-  try {
-    const token = req.headers.authorization.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    if (decoded.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied. Admin only.' });
-    }
-
-    const users = await User.find({}, '-password');
-    res.json(users);
-  } catch (error) {
-    console.error('Error in /api/users route:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('Global error handler caught an error:', err);
+  res.status(500).json({ message: 'Internal server error', error: err.message });
 });

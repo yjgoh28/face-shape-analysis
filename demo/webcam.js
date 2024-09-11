@@ -293,7 +293,17 @@ function setupLogoutButton() {
     document.body.appendChild(logoutBtn);
 }
 
-// Main function to initialize the system
+// Add this function to your main() function or wherever you set up your UI
+function setupUserDashboardButton() {
+    const userDashboardBtn = document.getElementById('userDashboardBtn');
+    userDashboardBtn.style.display = 'inline-block';
+    userDashboardBtn.addEventListener('click', () => {
+        document.getElementById('userDashboardOverlay').style.display = 'block';
+        fetchUsers();
+    });
+}
+
+// Update the main function to include the new setup
 async function main() {
   log('FaceAPI WebCam Test');
 
@@ -354,13 +364,13 @@ async function main() {
   }
 
   customFilterBtn.addEventListener('click', () => {
-    console.log('Custom filter button clicked');
+    // console.log('Custom filter button clicked');
     const customFilter = getCustomFilter();
     console.log('Custom filter returned:', customFilter);
     if (customFilter) {
-        console.log('Setting current filter to custom');
+        // console.log('Setting current filter to custom');
         setCurrentFilter('custom');
-        console.log('Custom filter set');
+        // console.log('Custom filter set');
         // Force a redraw of the filter
         requestAnimationFrame(() => drawFilterOnFace());
     } else {
@@ -383,6 +393,7 @@ async function main() {
   await preloadFilterImages(); // Preload filter images
   await setupCamera();
   setupLogoutButton();
+  setupUserDashboardButton();
 }
 
 // Start processing as soon as page is loaded
@@ -406,4 +417,46 @@ async function detectFaceShapes(video) {
         faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
         faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
     }, 100);
+}
+
+// Update the fetchUsers function to handle potential errors
+async function fetchUsers() {
+    const token = localStorage.getItem('token');
+    console.log('Retrieved token:', token);
+    if (!token) {
+        console.error('No token found');
+        alert('No authentication token found. Please log in again.');
+        return;
+    }
+
+    try {
+        const response = await fetch('http://localhost:5001/api/users', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        const tableBody = document.getElementById('userTableBody');
+        tableBody.innerHTML = ''; // Clear existing rows
+
+        data.forEach(user => {
+            const row = tableBody.insertRow();
+            row.insertCell(0).textContent = user.email;
+            row.insertCell(1).textContent = user.role;
+            row.insertCell(2).textContent = user.customFilter ? 'Yes' : 'No';
+        });
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        alert(`Failed to load user data: ${error.message}`);
+    }
 }

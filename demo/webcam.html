@@ -242,81 +242,6 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
-        /* Add this HTML for the user dashboard overlay */
-        <div id="userDashboardOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); z-index: 1000;">
-            <div style="background-color: white; margin: 50px auto; padding: 20px; width: 80%; max-width: 800px; height: 80%; overflow-y: auto;">
-                <h2>User Dashboard</h2>
-                <table id="userTable" style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr>
-                            <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Email</th>
-                            <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Role</th>
-                            <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Custom Filter</th>
-                        </tr>
-                    </thead>
-                    <tbody id="userTableBody">
-                    </tbody>
-                </table>
-                <button id="closeDashboardBtn" style="margin-top: 20px;">Close Dashboard</button>
-            </div>
-        </div>
-
-        <!-- Update the script at the end of the body tag -->
-        <script>
-            document.addEventListener('DOMContentLoaded', () => {
-                const userRole = localStorage.getItem('role');
-                const userDashboardBtn = document.getElementById('userDashboardBtn');
-                const userDashboardOverlay = document.getElementById('userDashboardOverlay');
-                const closeDashboardBtn = document.getElementById('closeDashboardBtn');
-                
-                if (userRole === 'admin') {
-                    userDashboardBtn.style.display = 'inline-block';
-                    userDashboardBtn.addEventListener('click', () => {
-                        userDashboardOverlay.style.display = 'block';
-                        fetchUsers();
-                    });
-
-                    closeDashboardBtn.addEventListener('click', () => {
-                        userDashboardOverlay.style.display = 'none';
-                    });
-                }
-            });
-
-            async function fetchUsers() {
-                const token = localStorage.getItem('token');
-                if (!token) {
-                    console.error('No token found');
-                    return;
-                }
-
-                try {
-                    const response = await fetch('http://localhost:5001/api/users', {
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch users');
-                    }
-
-                    const users = await response.json();
-                    const tableBody = document.getElementById('userTableBody');
-                    tableBody.innerHTML = ''; // Clear existing rows
-
-                    users.forEach(user => {
-                        const row = tableBody.insertRow();
-                        row.insertCell(0).textContent = user.email;
-                        row.insertCell(1).textContent = user.role;
-                        row.insertCell(2).textContent = user.customFilter ? 'Yes' : 'No';
-                    });
-                } catch (error) {
-                    console.error('Error fetching users:', error);
-                    alert('Failed to load user data. Please try again.');
-                }
-            }
-        </script>
     </style>
 </head>
 <body style="font-family: monospace; background: black; color: white; font-size: 16px; line-height: 22px; margin: 0; overflow-y: auto;">
@@ -327,7 +252,6 @@
 
     <button id="findShopBtn">
         Find Nearest Spectacle Shop
-        <div class="spinner" id="shopSpinner"></div>
     </button>
     <div id="shopSpinnerContainer">
         <div class="spinner" id="shopSpinner"></div>
@@ -339,16 +263,12 @@
         <button id="circleBtn">Circle</button>
         <button id="ovalBtn">Oval</button>
         <button id="rectangleBtn">Rectangle</button>
-        <!-- New button for custom filter -->
         <button id="customFilterBtn" style="display: none;">Custom Filter</button>
-        <!-- Add this button after the other buttons in the filter-buttons div -->
         <button id="userDashboardBtn" style="display: none;">User Dashboard</button>
     </div>
 
-    <!-- New upload button -->
     <button id="uploadBtn" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">Upload Image</button>
 
-    <!-- Hidden file input -->
     <input type="file" id="fileInput" style="display: none;" accept="image/*">
 
     <div id="sidebar">
@@ -360,19 +280,92 @@
         <input type="range" id="hue" min="0" max="360" value="0" class="slider">
     </div>
 
-    <!-- Add this script at the end of the body tag -->
+    <div id="userDashboardOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); z-index: 1000;">
+        <div style="background-color: white; margin: 50px auto; padding: 20px; width: 80%; max-width: 800px; height: 80%; overflow-y: auto;">
+            <h2>User Dashboard</h2>
+            <table id="userTable" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Email</th>
+                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Role</th>
+                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Custom Filter</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody">
+                </tbody>
+            </table>
+            <button id="closeDashboardBtn" style="margin-top: 20px;">Close Dashboard</button>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const userRole = localStorage.getItem('role');
             const userDashboardBtn = document.getElementById('userDashboardBtn');
+            const userDashboardOverlay = document.getElementById('userDashboardOverlay');
+            const closeDashboardBtn = document.getElementById('closeDashboardBtn');
             
-            if (userRole === 'admin') {
-                userDashboardBtn.style.display = 'inline-block';
-                userDashboardBtn.addEventListener('click', () => {
-                    window.location.href = 'user-dashboard.html';
-                });
-            }
+            // Show the user dashboard button for all users
+            userDashboardBtn.style.display = 'inline-block';
+            userDashboardBtn.addEventListener('click', () => {
+                userDashboardOverlay.style.display = 'block';
+                fetchUsers();
+            });
+
+            closeDashboardBtn.addEventListener('click', () => {
+                userDashboardOverlay.style.display = 'none';
+            });
         });
+
+        async function fetchUsers() {
+            const token = localStorage.getItem('token');
+            console.log('Retrieved token:', token);
+            if (!token) {
+                console.error('No token found');
+                alert('No authentication token found. Please log in again.');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:5001/api/users', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+
+                const text = await response.text();
+                console.log('Full response text:', text);
+
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (error) {
+                    console.error('Error parsing JSON:', error);
+                    console.error('Response text:', text);
+                    throw new Error(`Received non-JSON response from server: ${text.substring(0, 100)}...`);
+                }
+
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch users: ${response.status} ${response.statusText}. ${data.message || 'Unknown error'}`);
+                }
+
+                const tableBody = document.getElementById('userTableBody');
+                tableBody.innerHTML = ''; // Clear existing rows
+
+                data.forEach(user => {
+                    const row = tableBody.insertRow();
+                    row.insertCell(0).textContent = user.email;
+                    row.insertCell(1).textContent = user.role;
+                    row.insertCell(2).textContent = user.customFilter ? 'Yes' : 'No';
+                });
+            } catch (error) {
+                console.error('Error fetching users:', error);
+                alert(`Failed to load user data: ${error.message}`);
+            }
+        }
     </script>
 </body>
 </html>

@@ -32,8 +32,8 @@ async function handleLogin(e) {
         if (response.ok) {
             localStorage.setItem('token', data.token);
             localStorage.setItem('role', data.role);
-            localStorage.setItem('hasCustomFilter', data.hasCustomFilter);
-            localStorage.setItem('customFilterPath', data.customFilterPath || '');
+            console.log('Token stored:', data.token);
+            console.log('Role stored:', data.role);
             window.location.href = 'webcam.html';
         } else {
             throw new Error(data.message || 'Login failed');
@@ -41,7 +41,6 @@ async function handleLogin(e) {
     } catch (error) {
         console.error('Login error:', error);
         showErrorModal(error.message);
-        // Clear the password field
         document.getElementById('loginPassword').value = '';
     }
 }
