@@ -293,17 +293,23 @@ function setupLogoutButton() {
     document.body.appendChild(logoutBtn);
 }
 
-// Add this function to your main() function or wherever you set up your UI
+// Update the setupUserDashboardButton function
 function setupUserDashboardButton() {
     const userDashboardBtn = document.getElementById('userDashboardBtn');
-    userDashboardBtn.style.display = 'inline-block';
-    userDashboardBtn.addEventListener('click', () => {
-        document.getElementById('userDashboardOverlay').style.display = 'block';
-        fetchUsers();
-    });
+    const userRole = localStorage.getItem('role');
+    
+    if (userRole === 'admin') {
+        userDashboardBtn.style.display = 'inline-block';
+        userDashboardBtn.addEventListener('click', () => {
+            document.getElementById('userDashboardOverlay').style.display = 'block';
+            fetchUsers();
+        });
+    } else {
+        userDashboardBtn.style.display = 'none';
+    }
 }
 
-// Update the main function to include the new setup
+// Update the main function
 async function main() {
   log('FaceAPI WebCam Test');
 
