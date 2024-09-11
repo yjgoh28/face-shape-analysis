@@ -129,11 +129,7 @@ function displayFaceDetail(detections) {
 
     let faceShape = "";
 
-    // Round face
-    // Square face
-
-    // Oval face
-    if (ratioForeheadToCheekbone >0) {
+    if (ratioForeheadToCheekbone >1 && ratioJawToCheekbone > 1 && ratioCheekboneWidthToLength > 1) {
       faceShape = "Oval";
     }
     else if (ratioForeheadToCheekbone > 0.8 && ratioForeheadToCheekbone < 1.25) {
@@ -187,12 +183,6 @@ async function detectVideo(video, canvas) {
         case "Diamond":
           recommendation = "Oval, Cat-eye";
           break;
-        case "Rectangular":
-          recommendation = "Circle, Oval";
-          break;
-        case "Triangle":
-          recommendation = "Cat-eye, Aviator";
-          break;
         case "Heart":
           recommendation = "Circle, Oval";
           break;
@@ -221,10 +211,10 @@ async function setupCamera() {
   const canvas = document.getElementById('canvas');
   if (!video || !canvas) return null;
 
-  log('Setting up camera');
+  // log('Setting up camera');
   // setup webcam. note that navigator.mediaDevices requires that page is accessed via https
   if (!navigator.mediaDevices) {
-    log('Camera Error: access not supported');
+    // log('Camera Error: access not supported');
     return null;
   }
   let stream;
@@ -247,8 +237,8 @@ async function setupCamera() {
   if (settings.deviceId) delete settings.deviceId;
   if (settings.groupId) delete settings.groupId;
   if (settings.aspectRatio) settings.aspectRatio = Math.trunc(100 * settings.aspectRatio) / 100;
-  log(`Camera active: ${track.label}`);
-  log(`Camera settings: ${str(settings)}`);
+  // log(`Camera active: ${track.label}`);
+  // log(`Camera settings: ${str(settings)}`);
   canvas.addEventListener('click', () => {
     if (video && video.readyState >= 2) {
       if (video.paused) {
@@ -279,19 +269,7 @@ async function setupFaceAPI() {
   await faceapi.nets.faceRecognitionNet.load(modelPath);
   await faceapi.nets.faceExpressionNet.load(modelPath);
   optionsSSDMobileNet = new faceapi.SsdMobilenetv1Options({ minConfidence: minScore, maxResults });
-  log(`Models loaded: ${str(faceapi.tf.engine().state.numTensors)} tensors`);
-}
-
-// Add this function to your main() function or wherever you set up your UI
-function setupLogoutButton() {
-    const logoutBtn = document.createElement('button');
-    logoutBtn.textContent = 'Logout';
-    logoutBtn.style.position = 'fixed';
-    logoutBtn.style.top = '20px';
-    logoutBtn.style.left = '20px';
-    logoutBtn.style.zIndex = '1000';
-    logoutBtn.addEventListener('click', logout);
-    document.body.appendChild(logoutBtn);
+  // log(`Models loaded: ${str(faceapi.tf.engine().state.numTensors)} tensors`);
 }
 
 // Update the setupUserDashboardButton function
@@ -310,9 +288,18 @@ function setupUserDashboardButton() {
     }
 }
 
-// Update the main function
+// Add this function to set up the event listener for the Find Shop button
+function setupFindShopButton() {
+    const findShopBtn = document.getElementById('findShopBtn');
+    findShopBtn.addEventListener('click', () => {
+        console.log('Find Shop button clicked');
+        findNearestSpectacleShops();
+    });
+}
+
+// Update the main function to call setupFindShopButton
 async function main() {
-  log('FaceAPI WebCam Test');
+  // log('FaceAPI WebCam Test');
 
   // Load custom filter if it exists
   await loadCustomFilterOnStartup();
@@ -340,10 +327,6 @@ async function main() {
   document.getElementById('rectangleBtn').addEventListener('click', () => {
     setCurrentFilter('rectangle');
     console.log('Rectangle filter selected');
-  });
-  document.getElementById('findShopBtn').addEventListener('click', () => {
-    console.log('Finding nearest spectacle shops...');
-    findNearestSpectacleShops();
   });
 
   document.getElementById('uploadBtn').addEventListener('click', () => {
@@ -394,13 +377,16 @@ async function main() {
   if (faceapi.tf?.env().flagRegistry.CANVAS2D_WILL_READ_FREQUENTLY) faceapi.tf.env().set('CANVAS2D_WILL_READ_FREQUENTLY', true);
   if (faceapi.tf?.env().flagRegistry.WEBGL_EXP_CONV) faceapi.tf.env().set('WEBGL_EXP_CONV', true);
 
-  log(`Version: FaceAPI ${str(faceapi?.version || '(not loaded)')} TensorFlow/JS ${str(faceapi.tf?.version_core || '(not loaded)')} Backend: ${str(faceapi.tf?.getBackend() || '(not loaded)')}`);
+  // log(`Version: FaceAPI ${str(faceapi?.version || '(not loaded)')} TensorFlow/JS ${str(faceapi.tf?.version_core || '(not loaded)')} Backend: ${str(faceapi.tf?.getBackend() || '(not loaded)')}`);
 
   await setupFaceAPI();
   await preloadFilterImages(); // Preload filter images
   await setupCamera();
-  setupLogoutButton();
   setupUserDashboardButton();
+  setupFindShopButton();
+
+  // The logout button is now created in HTML, so we just need to add the event listener
+  document.getElementById('logoutBtn').addEventListener('click', logout);
 }
 
 // Start processing as soon as page is loaded

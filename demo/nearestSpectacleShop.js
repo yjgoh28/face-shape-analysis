@@ -1,10 +1,15 @@
 function findNearestSpectacleShops() {
+  console.log('findNearestSpectacleShops function called');
   const spinner = document.getElementById('shopSpinner');
+  const sidebar = document.getElementById('sidebar');
   spinner.style.display = 'block';
+  sidebar.style.display = 'block';
+  console.log('Sidebar display set to block');
 
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        console.log('Geolocation successful');
         const userLocation = {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
@@ -19,12 +24,13 @@ function findNearestSpectacleShops() {
 
         const service = new google.maps.places.PlacesService(document.createElement('div'));
         service.nearbySearch(request, (results, status) => {
+          console.log('Nearby search completed', status);
           displayResults(results, status);
           spinner.style.display = 'none';
         });
       },
-      () => {
-        console.error('Error: The Geolocation service failed.');
+      (error) => {
+        console.error('Geolocation error:', error);
         alert('Unable to retrieve your location. Please try again.');
         spinner.style.display = 'none';
       }
@@ -99,5 +105,5 @@ function displayResults(results, status) {
   }
 }
 
-// Change this line to export the function
+// Make sure this line is at the end of the file
 export { findNearestSpectacleShops };
