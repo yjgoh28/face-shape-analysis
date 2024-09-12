@@ -55,15 +55,28 @@ export async function fetchUsers() {
             row.insertCell(1).textContent = user.role;
             row.insertCell(2).textContent = user.customFilter ? 'Yes' : 'No';
             
-            // Update the delete button
-            const deleteCell = row.insertCell(3);
+            // Add new cell for custom filter image
+            const filterCell = row.insertCell(3);
+            if (user.customFilter) {
+                const img = document.createElement('img');
+                img.src = `http://localhost:5001/${user.customFilter}`; // Adjust the URL as needed
+                img.alt = 'Custom Filter';
+                img.style.width = '50px'; // Adjust size as needed
+                img.style.height = 'auto';
+                filterCell.appendChild(img);
+            } else {
+                filterCell.textContent = 'No custom filter';
+            }
+            
+            // Update the delete button (now in the 5th column)
+            const deleteCell = row.insertCell(4);
             const deleteButton = document.createElement('button');
             deleteButton.innerHTML = '&#10005;'; // X icon
             deleteButton.className = 'delete-btn';
             deleteButton.onclick = () => deleteUser(user._id);
             deleteCell.appendChild(deleteButton);
 
-            console.log('Added row for user:', user.email);
+            console.log('Added row for user:', user.email)
         });
 
         console.log('Finished populating table');

@@ -415,6 +415,13 @@
         .delete-btn:active {
             background-color: #a93226;
         }
+
+        #userTable img {
+            max-width: 50px;
+            max-height: 50px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body style="font-family: monospace; background: black; color: white; font-size: 16px; line-height: 22px; margin: 0; overflow-y: auto;">
@@ -464,7 +471,8 @@
                         <th>Email</th>
                         <th>Role</th>
                         <th>Custom Filter</th>
-                        <th>Actions</th> <!-- New column for delete button -->
+                        <th>Filter Image</th> <!-- New column for filter image -->
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="userTableBody">
