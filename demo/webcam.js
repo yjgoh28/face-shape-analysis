@@ -13,6 +13,7 @@ import { initColorSlider } from './colorSlider.js';
 import { logout } from './auth.js';
 import { uploadImage, getCustomFilter, loadCustomFilterOnStartup } from './imageUpload.js';
 import { fetchUsers } from './user-dashboard.js';
+import { startBrightnessCheck } from './brightnessCheck.js';
 
 /**
  * Estimates the distance of the face from the camera based on the size of the bounding box.
@@ -384,6 +385,9 @@ async function main() {
   await setupCamera();
   setupUserDashboardButton();
   setupFindShopButton();
+
+  // Start the brightness check
+  startBrightnessCheck();
 
   // The logout button is now created in HTML, so we just need to add the event listener
   document.getElementById('logoutBtn').addEventListener('click', logout);
