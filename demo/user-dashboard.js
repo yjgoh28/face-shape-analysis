@@ -54,6 +54,14 @@ export async function fetchUsers() {
             row.insertCell(0).textContent = user.email;
             row.insertCell(1).textContent = user.role;
             row.insertCell(2).textContent = user.customFilter ? 'Yes' : 'No';
+            
+            // Add a new cell for the delete button
+            const deleteCell = row.insertCell(3);
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Delete';
+            deleteButton.onclick = () => deleteUser(user._id);
+            deleteCell.appendChild(deleteButton);
+
             console.log('Added row for user:', user.email);
         });
 
@@ -61,5 +69,42 @@ export async function fetchUsers() {
     } catch (error) {
         console.error('Error fetching users:', error);
         alert(`Failed to load user data: ${error.message}`);
+    }
+}
+
+async function deleteUser(userId) {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        console.error('No token found');
+        alert('No authentication token found. Please log in again.');
+        return;
+    }
+
+    if (!confirm('Are you sure you want to delete this user?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`http://localhost:5001/api/users/${userId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('User deleted:', data);
+        alert('User deleted successfully');
+        
+        // Refresh the user list
+        fetchUsers();
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        alert(`Failed to delete user: ${error.message}`);
     }
 }

@@ -214,3 +214,29 @@ app.use((err, req, res, next) => {
   console.error('Global error handler caught an error:', err);
   res.status(500).json({ message: 'Internal server error', error: err.message });
 });
+
+// Add this new route after your existing routes
+app.delete('/api/users/:userId', async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Check if the user making the request is an admin
+    const requestingUser = await User.findById(decoded.userId);
+    if (requestingUser.role !== 'admin') {
+      return res.status(403).json({ message: 'Only admins can delete users' });
+    }
+
+    const userId = req.params.userId;
+    const deletedUser = await User.findByIdAndDelete(userId);
+
+    if (!deletedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
