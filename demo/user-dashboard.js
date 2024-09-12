@@ -55,10 +55,11 @@ export async function fetchUsers() {
             row.insertCell(1).textContent = user.role;
             row.insertCell(2).textContent = user.customFilter ? 'Yes' : 'No';
             
-            // Add a new cell for the delete button
+            // Update the delete button
             const deleteCell = row.insertCell(3);
             const deleteButton = document.createElement('button');
-            deleteButton.textContent = 'Delete';
+            deleteButton.innerHTML = '&#10005;'; // X icon
+            deleteButton.className = 'delete-btn';
             deleteButton.onclick = () => deleteUser(user._id);
             deleteCell.appendChild(deleteButton);
 
