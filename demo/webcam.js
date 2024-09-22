@@ -11,7 +11,7 @@ import { preloadFilterImages, filterImages } from './filterUtils.js';
 import { findNearestSpectacleShops } from './nearestSpectacleShop.js';
 import { initColorSlider } from './colorSlider.js';
 import { logout } from './auth.js';
-import { uploadImage, getCustomFilter, loadCustomFilterOnStartup } from './imageUpload.js';
+import { uploadImage, getCustomFilter, loadCustomFilterOnStartup, removeCustomFilter } from './imageUpload.js';
 import { fetchUsers } from './user-dashboard.js';
 import { startBrightnessCheck } from './brightnessCheck.js';
 
@@ -354,21 +354,65 @@ async function main() {
     customFilterBtn.style.display = 'inline-block';
   }
 
-  customFilterBtn.addEventListener('click', () => {
-    // console.log('Custom filter button clicked');
-    const customFilter = getCustomFilter();
-    console.log('Custom filter returned:', customFilter);
-    if (customFilter) {
-        // console.log('Setting current filter to custom');
-        setCurrentFilter('custom');
-        // console.log('Custom filter set');
-        // Force a redraw of the filter
-        requestAnimationFrame(() => drawFilterOnFace());
-    } else {
-        console.error('Custom filter not available');
-        alert('Custom filter is not ready. Please try uploading an image first.');
+  customFilterBtn.addEventListener('click', async () => {
+    try {
+      console.log('Custom filter button clicked');
+      const token = localStorage.getItem('token');
+      console.log('Token:', token);
+      const response = await fetch('http://localhost:5001/api/user-filter', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      console.log('Response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Response not OK. Status:', response.status, 'Text:', errorText);
+        throw new Error(`Failed to fetch user filter status: ${response.status} ${errorText}`);
+      }
+      
+      const data = await response.json();
+      console.log('User filter data:', data);
+      
+      if (data.hasCustomFilter) {
+        const customFilter = getCustomFilter();
+        console.log('Custom filter retrieved:', customFilter);
+        if (customFilter) {
+          setCurrentFilter('custom');
+          requestAnimationFrame(() => drawFilterOnFace());
+        } else {
+          console.error('Custom filter not available');
+          alert('Custom filter is not ready. Please try again in a moment.');
+        }
+      } else {
+        alert('You haven\'t uploaded a custom filter yet. Please upload an image first.');
+        document.getElementById('fileInput').click();
+      }
+    } catch (error) {
+      console.error('Error checking custom filter:', error);
+      alert(`An error occurred: ${error.message}. Please try again.`);
     }
   });
+
+  // Add this new button
+  const removeFilterBtn = document.createElement('button');
+  removeFilterBtn.id = 'removeFilterBtn';
+  removeFilterBtn.style.display = 'none';
+  document.body.appendChild(removeFilterBtn);
+
+  removeFilterBtn.addEventListener('click', async () => {
+    await removeCustomFilter();
+    setCurrentFilter('circle'); // Reset to default filter
+  });
+
+  // Modify the existing custom filter button setup
+  if (hasCustomFilter) {
+    customFilterBtn.style.display = 'inline-block';
+    removeFilterBtn.style.display = 'inline-block';
+  }
 
   // Set backend to WebGL and initialize TensorFlow.js
   await faceapi.tf.setBackend('webgl');

@@ -103,8 +103,12 @@ function toggleForms() {
 // Make toggleForms available globally
 window.toggleForms = toggleForms;
 
+import { clearCustomFilterData } from './imageUpload.js';
+
 export function logout() {
     localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    clearCustomFilterData(); // Add this line
     window.location.href = 'auth.html';
 }
 

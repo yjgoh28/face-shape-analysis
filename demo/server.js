@@ -53,7 +53,7 @@ const User = mongoose.model('User', new mongoose.Schema({
 // Set up multer for file uploads
 const upload = multer({ dest: 'uploads/' });
 
-// Update the registration route
+// API Routes
 app.post('/api/register', async (req, res) => {
   try {
     const { email, password, role, adminSecret } = req.body;
@@ -95,7 +95,6 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
-// Update the login route
 app.post('/api/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -114,7 +113,7 @@ app.post('/api/login', async (req, res) => {
       token,
       role: user.role,
       hasCustomFilter: !!user.customFilter,
-      customFilterPath: user.customFilter
+      customFilterPath: user.customFilter ? `uploads/${user._id}_${path.basename(user.customFilter)}` : null
     });
   } catch (error) {
     console.error(error);
@@ -122,7 +121,6 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// New route for image upload
 app.post('/api/upload-filter', upload.single('image'), async (req, res) => {
   try {
     const token = req.headers.authorization.split(' ')[1];
@@ -145,14 +143,13 @@ app.post('/api/upload-filter', upload.single('image'), async (req, res) => {
     user.customFilter = newPath;
     await user.save();
 
-    res.json({ message: 'Filter uploaded successfully', imageUrl: newPath });
+    res.json({ message: 'Filter uploaded successfully', imageUrl: `uploads/${user._id}_${req.file.originalname}` });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// Update the /api/users route
 app.get('/api/users', async (req, res) => {
   try {
     console.log('Received request for /api/users');
@@ -188,10 +185,133 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
+app.delete('/api/users/:userId', async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Check if the user making the request is an admin
+    const requestingUser = await User.findById(decoded.userId);
+    if (requestingUser.role !== 'admin') {
+      return res.status(403).json({ message: 'Only admins can delete users' });
+    }
+
+    const userId = req.params.userId;
+    const deletedUser = await User.findByIdAndDelete(userId);
+
+    if (!deletedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.get('/api/user-filter', async (req, res) => {
+  console.log('Received request for /api/user-filter');
+  try {
+    const authHeader = req.headers.authorization;
+    console.log('Auth header:', authHeader);
+    if (!authHeader) {
+      return res.status(401).json({ message: 'No authorization header provided' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    console.log('Token:', token);
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log('Decoded token:', decoded);
+
+    const user = await User.findById(decoded.userId);
+    console.log('User found:', user);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const response = {
+      hasCustomFilter: !!user.customFilter,
+      customFilterPath: user.customFilter ? `uploads/${user._id}_${path.basename(user.customFilter)}` : null
+    };
+    console.log('Sending response:', response);
+    res.json(response);
+  } catch (error) {
+    console.error('Error in /api/user-filter:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.delete('/api/user-filter', async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!user.customFilter) {
+      return res.status(400).json({ message: 'User does not have a custom filter' });
+    }
+
+    // Remove the custom filter file
+    fs.unlink(user.customFilter, (err) => {
+      if (err) console.error('Error deleting file:', err);
+    });
+
+    // Update user document
+    user.customFilter = null;
+    await user.save();
+
+    res.json({ message: 'Custom filter removed successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.delete('/api/user-filter/:userId', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!user.customFilter) {
+      return res.status(400).json({ message: 'User does not have a custom filter' });
+    }
+
+    // Remove the custom filter file
+    fs.unlink(user.customFilter, (err) => {
+      if (err) console.error('Error deleting file:', err);
+    });
+
+    // Update user document
+    user.customFilter = null;
+    await user.save();
+
+    res.json({ message: 'Custom filter removed successfully' });
+  } catch (error) {
+    console.error('Error removing custom filter:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 // Serve static files
 app.use(express.static(path.join(__dirname)));
 
-// Catch-all route (keep this at the end, but modify it)
+// Serve files from the 'uploads' directory
+app.use('/uploads', express.static('uploads'));
+
+// Catch-all route (keep this at the end)
 app.get('*', (req, res) => {
   console.log('Catch-all route hit:', req.url);
   if (req.url.startsWith('/api/')) {
@@ -201,6 +321,12 @@ app.get('*', (req, res) => {
     return res.sendStatus(404);
   }
   res.sendFile(path.join(__dirname, 'auth.html'));
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('Global error handler caught an error:', err);
+  res.status(500).json({ message: 'Internal server error', error: err.message });
 });
 
 const PORT = process.env.PORT || 5001;  // Changed to 5001
@@ -237,6 +363,104 @@ app.delete('/api/users/:userId', async (req, res) => {
     res.json({ message: 'User deleted successfully' });
   } catch (error) {
     console.error('Error deleting user:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Modify this route to use async/await and add more logging
+app.get('/api/user-filter', async (req, res) => {
+  console.log('Received request for /api/user-filter');
+  try {
+    const authHeader = req.headers.authorization;
+    console.log('Auth header:', authHeader);
+    if (!authHeader) {
+      return res.status(401).json({ message: 'No authorization header provided' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    console.log('Token:', token);
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log('Decoded token:', decoded);
+
+    const user = await User.findById(decoded.userId);
+    console.log('User found:', user);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const response = {
+      hasCustomFilter: !!user.customFilter,
+      customFilterPath: user.customFilter ? `uploads/${user._id}_${path.basename(user.customFilter)}` : null
+    };
+    console.log('Sending response:', response);
+    res.json(response);
+  } catch (error) {
+    console.error('Error in /api/user-filter:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Add this new route after your existing routes
+app.delete('/api/user-filter', async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!user.customFilter) {
+      return res.status(400).json({ message: 'User does not have a custom filter' });
+    }
+
+    // Remove the custom filter file
+    fs.unlink(user.customFilter, (err) => {
+      if (err) console.error('Error deleting file:', err);
+    });
+
+    // Update user document
+    user.customFilter = null;
+    await user.save();
+
+    res.json({ message: 'Custom filter removed successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Update this route in your server.js file
+app.delete('/api/user-filter/:userId', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!user.customFilter) {
+      return res.status(400).json({ message: 'User does not have a custom filter' });
+    }
+
+    // Remove the custom filter file
+    fs.unlink(user.customFilter, (err) => {
+      if (err) console.error('Error deleting file:', err);
+    });
+
+    // Update user document
+    user.customFilter = null;
+    await user.save();
+
+    res.json({ message: 'Custom filter removed successfully' });
+  } catch (error) {
+    console.error('Error removing custom filter:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });

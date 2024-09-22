@@ -64,6 +64,12 @@ export async function fetchUsers() {
                 img.style.width = '50px'; // Adjust size as needed
                 img.style.height = 'auto';
                 filterCell.appendChild(img);
+
+                // Add remove custom filter button
+                const removeFilterBtn = document.createElement('button');
+                removeFilterBtn.textContent = 'Remove Filter';
+                removeFilterBtn.onclick = () => removeCustomFilter(user._id);
+                filterCell.appendChild(removeFilterBtn);
             } else {
                 filterCell.textContent = 'No custom filter';
             }
@@ -120,5 +126,33 @@ async function deleteUser(userId) {
     } catch (error) {
         console.error('Error deleting user:', error);
         alert(`Failed to delete user: ${error.message}`);
+    }
+}
+
+// New function to remove custom filter
+async function removeCustomFilter(userId) {
+    if (!confirm('Are you sure you want to remove this user\'s custom filter?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`http://localhost:5001/api/user-filter/${userId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Custom filter removed:', data);
+        alert('Custom filter removed successfully');
+        
+        // Refresh the user list
+        fetchUsers();
+    } catch (error) {
+        console.error('Error removing custom filter:', error);
+        alert(`Failed to remove custom filter: ${error.message}`);
     }
 }
