@@ -130,7 +130,7 @@ function displayFaceDetail(detections) {
 
     let faceShape = "";
 
-    if (ratioForeheadToCheekbone >0 ) {
+    if (ratioForeheadToCheekbone <1 && ratioCheekboneWidthToLength <5) {
       faceShape = "Oval";
     }
     else if (ratioForeheadToCheekbone > 0.8 && ratioForeheadToCheekbone < 1.25) {
